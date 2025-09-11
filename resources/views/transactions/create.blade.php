@@ -43,6 +43,44 @@ textarea.form-input {
 /* Fix untuk radio buttons */
 input[type="radio"] {
     accent-color: #3b82f6;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+/* Payment option styling */
+.payment-option {
+    transition: all 0.2s ease-in-out;
+    border: 2px solid #e5e7eb;
+}
+
+.payment-option:hover {
+    border-color: #bfdbfe !important;
+    background-color: #f8fafc !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.payment-option.selected {
+    border-color: #3b82f6 !important;
+    background-color: #eff6ff !important;
+    box-shadow: 0 0 0 1px #3b82f6, 0 4px 6px rgba(59, 130, 246, 0.1);
+}
+
+.payment-option.selected::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background-color: #3b82f6;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.payment-option {
+    position: relative;
 }
 
 /* Input number styling */
@@ -66,12 +104,20 @@ input, select, textarea {
                 <h2 class="text-2xl font-bold text-gray-800">Jual Tiket Baru</h2>
                 <p class="text-gray-600 mt-1">Pilih jadwal dan input data penumpang</p>
             </div>
-            <a href="{{ route('dashboard') }}" class="btn btn-secondary">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-                Kembali
-            </a>
+            <div class="flex space-x-3">
+                <a href="{{ route('transactions.index') }}" class="btn btn-info">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                    Riwayat Transaksi
+                </a>
+                <a href="{{ route('dashboard') }}" class="btn btn-secondary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Kembali
+                </a>
+            </div>
         </div>
     </div>
 
@@ -310,10 +356,32 @@ function togglePaymentFields() {
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
     const paymentRefSection = document.getElementById('paymentRefSection');
     
+    // Update payment reference field visibility
     if (paymentMethod === 'transfer' || paymentMethod === 'qris') {
         paymentRefSection.style.display = 'block';
     } else {
         paymentRefSection.style.display = 'none';
+    }
+    
+    // Update visual selection
+    updatePaymentSelection();
+}
+
+function updatePaymentSelection() {
+    const allOptions = document.querySelectorAll('.payment-option');
+    const selectedRadio = document.querySelector('input[name="payment_method"]:checked');
+    
+    // Remove selected class from all options
+    allOptions.forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Add selected class to the chosen option
+    if (selectedRadio) {
+        const selectedOption = selectedRadio.closest('.payment-option');
+        if (selectedOption) {
+            selectedOption.classList.add('selected');
+        }
     }
 }
 
@@ -321,11 +389,19 @@ function togglePaymentFields() {
 document.addEventListener('DOMContentLoaded', function() {
     updatePricing();
     
-    // Initialize payment method selection
-    const checkedPayment = document.querySelector('input[name="payment_method"]:checked');
-    if (checkedPayment) {
-        handlePaymentChange(checkedPayment);
-    }
+    // Initialize payment method selection visual
+    updatePaymentSelection();
+    
+    // Add event listeners to all payment radio buttons
+    const paymentRadios = document.querySelectorAll('input[name="payment_method"]');
+    paymentRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            togglePaymentFields();
+        });
+    });
+    
+    // Initialize payment reference field visibility
+    togglePaymentFields();
 });
 </script>
 @endsection

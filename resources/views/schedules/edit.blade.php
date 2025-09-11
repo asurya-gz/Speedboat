@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Jadwal')
+@section('title', 'Edit Jadwal')
 
 @section('content')
 <div class="max-w-4xl mx-auto">
@@ -8,15 +8,16 @@
         <div class="px-6 py-4 bg-blue-600 dark:bg-blue-700 text-white">
             <h3 class="text-lg font-semibold flex items-center">
                 <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                 </svg>
-                Tambah Jadwal Keberangkatan
+                Edit Jadwal: {{ $schedule->destination->name }}
             </h3>
         </div>
         
         <div class="p-6">
-            <form action="{{ route('schedules.store') }}" method="POST" class="space-y-6">
+            <form action="{{ route('schedules.update', $schedule) }}" method="POST" class="space-y-6">
                 @csrf
+                @method('PUT')
                 
                 <!-- Destinasi -->
                 <div>
@@ -34,7 +35,7 @@
                         <option value="">Pilih Destinasi...</option>
                         @foreach($destinations as $destination)
                             <option value="{{ $destination->id }}" 
-                                    {{ old('destination_id') == $destination->id ? 'selected' : '' }}
+                                    {{ old('destination_id', $schedule->destination_id) == $destination->id ? 'selected' : '' }}
                                     data-adult-price="{{ $destination->adult_price }}"
                                     data-child-price="{{ $destination->child_price }}">
                                 {{ $destination->code }} - {{ $destination->name }}
@@ -59,7 +60,7 @@
                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 @error('departure_date') border-red-500 @enderror" 
                                id="departure_date" 
                                name="departure_date" 
-                               value="{{ old('departure_date') }}"
+                               value="{{ old('departure_date', $schedule->departure_date->format('Y-m-d')) }}"
                                min="{{ date('Y-m-d') }}"
                                required>
                         @error('departure_date')
@@ -79,7 +80,7 @@
                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 @error('departure_time') border-red-500 @enderror" 
                                id="departure_time" 
                                name="departure_time" 
-                               value="{{ old('departure_time') }}"
+                               value="{{ old('departure_time', $schedule->departure_time->format('H:i')) }}"
                                required>
                         @error('departure_time')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -99,7 +100,7 @@
                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('capacity') border-red-500 @enderror" 
                            id="capacity" 
                            name="capacity" 
-                           value="{{ old('capacity', 50) }}"
+                           value="{{ old('capacity', $schedule->capacity) }}"
                            placeholder="50"
                            min="1"
                            max="200"
@@ -118,7 +119,7 @@
                                id="is_active" 
                                name="is_active" 
                                value="1" 
-                               {{ old('is_active', true) ? 'checked' : '' }}>
+                               {{ old('is_active', $schedule->is_active) ? 'checked' : '' }}>
                         <label class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300" for="is_active">
                             <svg class="w-4 h-4 inline text-green-600 dark:text-green-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -128,13 +129,37 @@
                     </div>
                 </div>
 
-                <!-- Preview harga -->
-                <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4 hidden" id="price-preview">
+                <!-- Current Status Info -->
+                <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                     <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center">
                         <svg class="w-4 h-4 mr-1 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        Preview Harga Tiket
+                        Status Saat Ini
+                    </h6>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-900 dark:text-white">Kapasitas:</span>
+                            <span class="font-medium text-gray-900 dark:text-white ml-1">{{ $schedule->capacity }} orang</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-900 dark:text-white">Tersedia:</span>
+                            <span class="font-medium text-green-800 dark:text-green-300 ml-1">{{ $schedule->available_seats }} kursi</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-900 dark:text-white">Terbooked:</span>
+                            <span class="font-medium text-red-800 dark:text-red-300 ml-1">{{ $schedule->capacity - $schedule->available_seats }} kursi</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview harga -->
+                <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4" id="price-preview">
+                    <h6 class="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center">
+                        <svg class="w-4 h-4 mr-1 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Harga Tiket
                     </h6>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="flex items-center">
@@ -143,7 +168,7 @@
                             </svg>
                             <div>
                                 <div class="text-sm font-medium text-gray-900 dark:text-white">Dewasa</div>
-                                <div class="text-sm text-green-600 dark:text-green-400 font-semibold" id="adult-price">-</div>
+                                <div class="text-sm text-green-600 dark:text-green-400 font-semibold" id="adult-price">Rp {{ number_format($schedule->destination->adult_price, 0, ',', '.') }}</div>
                             </div>
                         </div>
                         <div class="flex items-center">
@@ -152,7 +177,7 @@
                             </svg>
                             <div>
                                 <div class="text-sm font-medium text-gray-900 dark:text-white">Anak</div>
-                                <div class="text-sm text-cyan-600 dark:text-cyan-400 font-semibold" id="child-price">-</div>
+                                <div class="text-sm text-cyan-600 dark:text-cyan-400 font-semibold" id="child-price">Rp {{ number_format($schedule->destination->child_price, 0, ',', '.') }}</div>
                             </div>
                         </div>
                     </div>
@@ -166,11 +191,11 @@
                         </svg>
                         Kembali
                     </a>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-warning">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
                         </svg>
-                        Simpan Jadwal
+                        Update Jadwal
                     </button>
                 </div>
             </form>
@@ -182,7 +207,6 @@
 <script>
     document.getElementById('destination_id').addEventListener('change', function() {
         const selected = this.options[this.selectedIndex];
-        const pricePreview = document.getElementById('price-preview');
         
         if (selected.value) {
             const adultPrice = selected.getAttribute('data-adult-price');
@@ -192,10 +216,6 @@
                 new Intl.NumberFormat('id-ID').format(adultPrice);
             document.getElementById('child-price').textContent = 'Rp ' + 
                 new Intl.NumberFormat('id-ID').format(childPrice);
-            
-            pricePreview.classList.remove('hidden');
-        } else {
-            pricePreview.classList.add('hidden');
         }
     });
 </script>

@@ -42,6 +42,22 @@ html.dark .sidebar-nav-item.active {
     @apply text-blue-400 bg-blue-900/50;
 }
 
+.sidebar-submenu-item {
+    @apply text-gray-600 transition-all duration-200 hover:text-gray-900 hover:bg-gray-100 rounded-lg px-3 py-2 flex items-center text-sm;
+}
+
+html.dark .sidebar-submenu-item {
+    @apply text-gray-400 hover:text-white hover:bg-gray-700;
+}
+
+.sidebar-submenu-item.active {
+    @apply text-blue-600 bg-blue-50 font-medium;
+}
+
+html.dark .sidebar-submenu-item.active {
+    @apply text-blue-400 bg-blue-900/50;
+}
+
 .btn-gradient-primary {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     @apply border-none text-white font-medium rounded-lg px-4 py-2 transition-all duration-300;

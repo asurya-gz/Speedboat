@@ -112,14 +112,17 @@
     <!-- Today's Schedules -->
     <div class="bg-white rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Jadwal Hari Ini</h3>
+            <h3 class="text-lg font-semibold text-gray-900">Jadwal Terbaru</h3>
         </div>
         <div class="p-6">
             @php
+                // Tampilkan jadwal aktif yang tersedia (hari ini dan ke depan)
                 $todaySchedules = \App\Models\Schedule::with('destination')
-                    ->where('departure_date', today())
                     ->where('is_active', true)
-                    ->orderBy('departure_time')
+                    ->where('departure_date', '>=', now()->format('Y-m-d'))
+                    ->orderBy('departure_date', 'asc')
+                    ->orderBy('departure_time', 'asc')
+                    ->limit(6)
                     ->get();
             @endphp
             
@@ -175,8 +178,8 @@
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">Tidak ada jadwal hari ini</h3>
-                    <p class="mt-1 text-sm text-gray-500">Jadwal keberangkatan untuk hari ini belum tersedia</p>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">Tidak ada jadwal tersedia</h3>
+                    <p class="mt-1 text-sm text-gray-500">Jadwal keberangkatan belum tersedia</p>
                 </div>
             @endif
         </div>

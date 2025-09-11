@@ -334,13 +334,7 @@
 
                         <!-- Remember & Forgot -->
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <input id="remember" 
-                                       type="checkbox" 
-                                       name="remember"
-                                       class="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2">
-                                <label for="remember" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Ingat saya</label>
-                            </div>
+      
                             <a href="#" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors">Lupa password?</a>
                         </div>
 
@@ -368,7 +362,7 @@
 
         <!-- Footer -->
         <div class="text-center mt-8 fade-in-up" style="animation-delay: 0.4s;">
-            <p class="text-gray-500 dark:text-gray-400 text-sm">© 2024 Speedboat Ticketing. All rights reserved.</p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">© {{ date('Y') }} Speedboat Ticketing. All rights reserved.</p>
         </div>
     </div>
 

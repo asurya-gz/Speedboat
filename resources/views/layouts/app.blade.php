@@ -84,17 +84,47 @@
                         @endif
 
                         @if(Auth::user()->isAdmin() || Auth::user()->isKasir())
-                            <!-- Transactions - accessible by Admin and Kasir -->
-                            <a href="#" onclick="alert('Fitur transaksi akan segera hadir!')" class="sidebar-nav-item">
-                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                </svg>
-                                @if(Auth::user()->isKasir())
-                                    Penjualan Tiket
-                                @else
-                                    Transaksi
-                                @endif
-                            </a>
+                            <!-- Tiket Menu with Dropdown - accessible by Admin and Kasir -->
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" 
+                                        class="sidebar-nav-item w-full flex items-center justify-between {{ request()->routeIs('transactions.*') ? 'active' : '' }}">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+                                        </svg>
+                                        Tiket
+                                    </div>
+                                    <svg class="w-4 h-4 transition-transform duration-200" 
+                                         :class="open ? 'rotate-180' : ''" 
+                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 transform -translate-y-2"
+                                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 transform translate-y-0"
+                                     x-transition:leave-end="opacity-0 transform -translate-y-2"
+                                     class="ml-8 mt-2 space-y-1">
+                                    <a href="{{ route('transactions.create') }}" 
+                                       class="sidebar-submenu-item {{ request()->routeIs('transactions.create') ? 'active' : '' }}">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        </svg>
+                                        Penjualan Tiket
+                                    </a>
+                                    <a href="{{ route('transactions.index') }}" 
+                                       class="sidebar-submenu-item {{ request()->routeIs('transactions.index') ? 'active' : '' }}">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                        </svg>
+                                        Riwayat Transaksi
+                                    </a>
+                                </div>
+                            </div>
                         @endif
 
                         @if(Auth::user()->isAdmin() || Auth::user()->isBoarding())
@@ -109,7 +139,8 @@
 
                         @if(Auth::user()->isAdmin())
                             <!-- User Management - accessible by Admin only -->
-                            <a href="#" onclick="alert('Fitur manajemen user akan segera hadir!')" class="sidebar-nav-item">
+                            <a href="{{ route('users.index') }}" 
+                               class="sidebar-nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                                 </svg>

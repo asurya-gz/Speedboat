@@ -6,6 +6,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,10 +37,12 @@ Route::middleware('auth')->group(function () {
 
 // Protected routes with role-based access
 Route::middleware(['auth', 'role'])->group(function () {
-    // Admin routes - full access to destinations and schedules CRUD
+    // Admin routes - full access to destinations, schedules, and users CRUD
     Route::middleware('role:admin')->group(function () {
         Route::resource('destinations', DestinationController::class);
         Route::resource('schedules', ScheduleController::class);
+        Route::resource('users', UserController::class);
+        Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     });
     
     // Kasir routes - read access to destinations and schedules, full access to transactions
@@ -54,10 +57,14 @@ Route::middleware(['auth', 'role'])->group(function () {
         Route::get('transactions/{transaction}/print', [TransactionController::class, 'printTickets'])->name('transactions.print');
     });
     
-    // Boarding routes - read access to schedules, validation access
-    Route::middleware('role:boarding,admin')->group(function () {
+    // Schedules - read access for kasir, boarding, admin
+    Route::middleware('role:kasir,boarding,admin')->group(function () {
         Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
         Route::get('schedules/{schedule}', [ScheduleController::class, 'show'])->name('schedules.show');
+    });
+    
+    // Boarding specific routes - validation access
+    Route::middleware('role:boarding,admin')->group(function () {
         
         // Ticket validation routes
         Route::get('tickets/validate', [TicketController::class, 'validateForm'])->name('tickets.validate.form');

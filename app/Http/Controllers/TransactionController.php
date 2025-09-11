@@ -13,13 +13,20 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TransactionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $perPage = $request->input('per_page', 10);
+        
+        // Validate per_page parameter
+        if (!in_array($perPage, [3, 5, 10])) {
+            $perPage = 10;
+        }
+        
         $transactions = Transaction::with(['schedule.destination', 'creator'])
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate($perPage);
 
-        return view('transactions.index', compact('transactions'));
+        return view('transactions.index', compact('transactions', 'perPage'));
     }
 
     public function create()
