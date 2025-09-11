@@ -29,7 +29,7 @@
                             Nama Destinasi
                         </label>
                         <input type="text" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('name') border-red-500 @enderror" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder-gray-500 @error('name') border-red-500 @enderror" 
                                id="name" 
                                name="name" 
                                value="{{ old('name') }}"
@@ -49,7 +49,7 @@
                             Kode Destinasi
                         </label>
                         <input type="text" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('code') border-red-500 @enderror uppercase" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder-gray-500 uppercase @error('code') border-red-500 @enderror" 
                                id="code" 
                                name="code" 
                                value="{{ old('code') }}"
@@ -77,7 +77,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" 
-                                   class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('adult_price') border-red-500 @enderror" 
+                                   class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder-gray-500 @error('adult_price') border-red-500 @enderror" 
                                    id="adult_price" 
                                    name="adult_price" 
                                    value="{{ old('adult_price') }}"
@@ -103,7 +103,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" 
-                                   class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('child_price') border-red-500 @enderror" 
+                                   class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder-gray-500 @error('child_price') border-red-500 @enderror" 
                                    id="child_price" 
                                    name="child_price" 
                                    value="{{ old('child_price') }}"
@@ -125,7 +125,7 @@
                         </svg>
                         Deskripsi
                     </label>
-                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 @error('description') border-red-500 @enderror" 
+                    <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder-gray-500 @error('description') border-red-500 @enderror" 
                               id="description" 
                               name="description" 
                               rows="3"
