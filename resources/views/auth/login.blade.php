@@ -143,17 +143,46 @@
             opacity: 0.01;
         }
         
-        /* Force text visibility in light mode */
+        /* Light mode styles - FIXED */
         html:not(.dark) .glass-effect h1,
         html:not(.dark) .glass-effect h2,
         html:not(.dark) .glass-effect p,
-        html:not(.dark) .glass-effect label,
+        html:not(.dark) .glass-effect label {
+            color: #1f2937 !important;
+        }
+        
+        /* Light mode input styles - FIXED */
         html:not(.dark) .glass-effect input {
+            background-color: #ffffff !important;
+            border-color: #d1d5db !important;
             color: #1f2937 !important;
         }
         
         html:not(.dark) .glass-effect input::placeholder {
-            color: #6b7280 !important;
+            color: #9ca3af !important;
+        }
+        
+        html:not(.dark) .glass-effect input:focus {
+            background-color: #ffffff !important;
+            border-color: #3b82f6 !important;
+            color: #1f2937 !important;
+        }
+        
+        /* Dark mode input styles */
+        html.dark .glass-effect input {
+            background-color: #374151 !important;
+            border-color: #4b5563 !important;
+            color: #ffffff !important;
+        }
+        
+        html.dark .glass-effect input::placeholder {
+            color: #9ca3af !important;
+        }
+        
+        html.dark .glass-effect input:focus {
+            background-color: #374151 !important;
+            border-color: #3b82f6 !important;
+            color: #ffffff !important;
         }
         
         /* Force header title visibility in light mode */
@@ -162,6 +191,35 @@
         html:not(.dark) .fade-in-up p {
             color: #111827 !important;
             text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Icon colors for light/dark mode */
+        html:not(.dark) .glass-effect svg {
+            color: #6b7280 !important;
+        }
+        
+        html.dark .glass-effect svg {
+            color: #9ca3af !important;
+        }
+        
+        /* Checkbox styles */
+        html:not(.dark) input[type="checkbox"] {
+            background-color: #ffffff !important;
+            border-color: #d1d5db !important;
+        }
+        
+        html.dark input[type="checkbox"] {
+            background-color: #374151 !important;
+            border-color: #4b5563 !important;
+        }
+        
+        /* Link colors */
+        html:not(.dark) .glass-effect a {
+            color: #2563eb !important;
+        }
+        
+        html.dark .glass-effect a {
+            color: #60a5fa !important;
         }
     </style>
 </head>
@@ -230,14 +288,14 @@
                             <label for="email" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Email Address</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
                                     </svg>
                                 </div>
                                 <input type="email" 
                                        name="email" 
                                        id="email" 
-                                       class="input-focus bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-4" 
+                                       class="input-focus bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-4" 
                                        placeholder="name@company.com" 
                                        required>
                             </div>
@@ -249,7 +307,7 @@
                             <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Password</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                                     </svg>
                                 </div>
@@ -257,10 +315,10 @@
                                        name="password" 
                                        id="password" 
                                        placeholder="••••••••" 
-                                       class="input-focus bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-4" 
+                                       class="input-focus bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-4 pr-12" 
                                        required>
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                    <button type="button" onclick="togglePassword()" class="text-gray-600 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                    <button type="button" onclick="togglePassword()" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 transition-colors">
                                         <svg id="eye-open" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -280,7 +338,7 @@
                                 <input id="remember" 
                                        type="checkbox" 
                                        name="remember"
-                                       class="w-4 h-4 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-blue-500 focus:ring-2">
+                                       class="w-4 h-4 text-blue-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2">
                                 <label for="remember" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Ingat saya</label>
                             </div>
                             <a href="#" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors">Lupa password?</a>
@@ -331,7 +389,6 @@
             }
         }
 
-
         // Theme toggle functionality for login page
         function toggleLoginTheme() {
             const html = document.documentElement;
@@ -350,14 +407,6 @@
             }
             
             updateLoginThemeIcons();
-            
-            // Force style recomputation
-            const glassElements = document.querySelectorAll('.glass-effect');
-            glassElements.forEach(el => {
-                el.style.display = 'none';
-                el.offsetHeight; // trigger reflow
-                el.style.display = '';
-            });
         }
         
         function updateLoginThemeIcons() {
@@ -375,11 +424,6 @@
                 darkIcon.classList.add('hidden');
                 lightIcon.classList.remove('hidden');
             }
-            
-            // Force refresh of styles
-            document.documentElement.style.display = 'none';
-            document.documentElement.offsetHeight; // trigger reflow
-            document.documentElement.style.display = '';
         }
 
         // Add floating animation to input fields on focus

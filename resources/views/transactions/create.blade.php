@@ -3,6 +3,61 @@
 @section('title', 'Jual Tiket Baru')
 
 @section('content')
+<style>
+/* Fix untuk input fields agar teks terlihat */
+.form-input, .form-select {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.form-input:focus, .form-select:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 1px #3b82f6 !important;
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+.form-input::placeholder {
+    color: #9ca3af !important;
+}
+
+/* Pastikan textarea juga terlihat */
+textarea.form-input {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+    resize: vertical;
+}
+
+/* Fix untuk select options */
+.form-select option {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+/* Fix untuk radio buttons */
+input[type="radio"] {
+    accent-color: #3b82f6;
+}
+
+/* Input number styling */
+input[type="number"] {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+/* Ensure all form elements are visible */
+input, select, textarea {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+</style>
+
 <div class="max-w-4xl mx-auto">
     <!-- Header -->
     <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
@@ -34,7 +89,10 @@
                 <label for="schedule_id" class="block text-sm font-medium text-gray-700 mb-2">
                     Pilih Jadwal Keberangkatan *
                 </label>
-                <select name="schedule_id" id="schedule_id" class="form-select w-full" required onchange="updatePricing()">
+                <select name="schedule_id" id="schedule_id" 
+                        class="form-select w-full" 
+                        style="background-color: white !important; color: #1f2937 !important;" 
+                        required onchange="updatePricing()">
                     <option value="">-- Pilih Jadwal --</option>
                     @foreach($schedules as $schedule)
                     <option value="{{ $schedule->id }}" 
@@ -73,7 +131,11 @@
                         Nama Penumpang Utama *
                     </label>
                     <input type="text" name="passenger_name" id="passenger_name" 
-                           class="form-input w-full" value="{{ old('passenger_name') }}" required>
+                           class="form-input w-full" 
+                           style="background-color: white !important; color: #1f2937 !important;"
+                           value="{{ old('passenger_name') }}" 
+                           placeholder="Masukkan nama penumpang utama"
+                           required>
                     @error('passenger_name')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -87,13 +149,17 @@
                         <div>
                             <label for="adult_count" class="block text-xs text-gray-500 mb-1">Dewasa</label>
                             <input type="number" name="adult_count" id="adult_count" 
-                                   class="form-input w-full" value="{{ old('adult_count', 1) }}" 
+                                   class="form-input w-full" 
+                                   style="background-color: white !important; color: #1f2937 !important;"
+                                   value="{{ old('adult_count', 1) }}" 
                                    min="1" max="10" required onchange="calculateTotal()">
                         </div>
                         <div>
                             <label for="child_count" class="block text-xs text-gray-500 mb-1">Anak</label>
                             <input type="number" name="child_count" id="child_count" 
-                                   class="form-input w-full" value="{{ old('child_count', 0) }}" 
+                                   class="form-input w-full" 
+                                   style="background-color: white !important; color: #1f2937 !important;"
+                                   value="{{ old('child_count', 0) }}" 
                                    min="0" max="10" onchange="calculateTotal()">
                         </div>
                     </div>
@@ -120,29 +186,29 @@
                     Metode Pembayaran *
                 </label>
                 <div class="grid grid-cols-3 gap-4">
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label class="payment-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
                         <input type="radio" name="payment_method" value="cash" class="mr-3" 
                                {{ old('payment_method') == 'cash' ? 'checked' : '' }} onchange="togglePaymentFields()">
                         <div>
-                            <div class="font-medium">Tunai</div>
+                            <div class="font-medium text-gray-700">Tunai</div>
                             <div class="text-xs text-gray-500">Bayar langsung</div>
                         </div>
                     </label>
                     
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label class="payment-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
                         <input type="radio" name="payment_method" value="transfer" class="mr-3"
                                {{ old('payment_method') == 'transfer' ? 'checked' : '' }} onchange="togglePaymentFields()">
                         <div>
-                            <div class="font-medium">Transfer</div>
+                            <div class="font-medium text-gray-700">Transfer</div>
                             <div class="text-xs text-gray-500">Bank Transfer</div>
                         </div>
                     </label>
                     
-                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label class="payment-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
                         <input type="radio" name="payment_method" value="qris" class="mr-3"
                                {{ old('payment_method') == 'qris' ? 'checked' : '' }} onchange="togglePaymentFields()">
                         <div>
-                            <div class="font-medium">QRIS</div>
+                            <div class="font-medium text-gray-700">QRIS</div>
                             <div class="text-xs text-gray-500">Scan QR</div>
                         </div>
                     </label>
@@ -158,7 +224,9 @@
                     Referensi Pembayaran
                 </label>
                 <input type="text" name="payment_reference" id="payment_reference" 
-                       class="form-input w-full" value="{{ old('payment_reference') }}"
+                       class="form-input w-full" 
+                       style="background-color: white !important; color: #1f2937 !important;"
+                       value="{{ old('payment_reference') }}"
                        placeholder="No. Transaksi / ID Pembayaran">
                 <p class="mt-1 text-xs text-gray-500">Opsional untuk non-tunai</p>
             </div>
@@ -168,7 +236,9 @@
                 <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
                     Catatan (Opsional)
                 </label>
-                <textarea name="notes" id="notes" rows="3" class="form-input w-full" 
+                <textarea name="notes" id="notes" rows="3" 
+                          class="form-input w-full" 
+                          style="background-color: white !important; color: #1f2937 !important;"
                           placeholder="Catatan tambahan...">{{ old('notes') }}</textarea>
             </div>
 
@@ -250,7 +320,12 @@ function togglePaymentFields() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     updatePricing();
-    togglePaymentFields();
+    
+    // Initialize payment method selection
+    const checkedPayment = document.querySelector('input[name="payment_method"]:checked');
+    if (checkedPayment) {
+        handlePaymentChange(checkedPayment);
+    }
 });
 </script>
 @endsection
