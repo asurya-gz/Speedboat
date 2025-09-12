@@ -10,7 +10,7 @@ class DestinationController extends Controller
 {
     public function index()
     {
-        $destinations = Destination::all();
+        $destinations = Destination::latest()->paginate(10);
         return view('destinations.index', compact('destinations'));
     }
 
@@ -75,5 +75,47 @@ class DestinationController extends Controller
     {
         $destination->update(['is_active' => false]);
         return redirect()->route('destinations.index')->with('success', 'Destinasi berhasil dihapus');
+    }
+
+    public function export()
+    {
+        $destinations = Destination::all();
+        
+        $csvData = [];
+        $csvData[] = ['Kode', 'Nama Destinasi', 'Harga Dewasa', 'Harga Anak', 'Status', 'Deskripsi', 'Dibuat Tanggal'];
+        
+        foreach ($destinations as $destination) {
+            $csvData[] = [
+                $destination->code,
+                $destination->name,
+                $destination->adult_price,
+                $destination->child_price,
+                $destination->is_active ? 'Aktif' : 'Nonaktif',
+                $destination->description ?? '',
+                $destination->created_at->format('Y-m-d H:i:s')
+            ];
+        }
+        
+        $filename = 'destinasi_' . date('Y-m-d_H-i-s') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+        
+        $callback = function() use ($csvData) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for UTF-8
+            fwrite($file, "\xEF\xBB\xBF");
+            
+            foreach ($csvData as $row) {
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
     }
 }

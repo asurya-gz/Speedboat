@@ -49,8 +49,10 @@ Route::middleware(['auth', 'role'])->group(function () {
     Route::middleware('role:kasir,admin')->group(function () {
         Route::get('destinations', [DestinationController::class, 'index'])->name('destinations.index');
         Route::get('destinations/{destination}', [DestinationController::class, 'show'])->name('destinations.show');
+        Route::get('destinations/export/csv', [DestinationController::class, 'export'])->name('destinations.export');
         Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
         Route::get('schedules/{schedule}', [ScheduleController::class, 'show'])->name('schedules.show');
+        Route::get('schedules/export/csv', [ScheduleController::class, 'export'])->name('schedules.export');
         
         Route::resource('transactions', TransactionController::class);
         Route::patch('transactions/{transaction}/confirm-payment', [TransactionController::class, 'confirmPayment'])->name('transactions.confirm-payment');

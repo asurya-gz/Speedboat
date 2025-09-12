@@ -187,7 +187,6 @@ html.dark input, html.dark select, html.dark textarea {
                 </label>
                 <select name="schedule_id" id="schedule_id" 
                         class="form-select w-full" 
-                        style="background-color: white !important; color: #1f2937 !important;" 
                         required onchange="updatePricing()">
                     <option value="">-- Pilih Jadwal --</option>
                     @foreach($schedules as $schedule)
@@ -228,7 +227,6 @@ html.dark input, html.dark select, html.dark textarea {
                     </label>
                     <input type="text" name="passenger_name" id="passenger_name" 
                            class="form-input w-full" 
-                           style="background-color: white !important; color: #1f2937 !important;"
                            value="{{ old('passenger_name') }}" 
                            placeholder="Masukkan nama penumpang utama"
                            required>
@@ -246,7 +244,6 @@ html.dark input, html.dark select, html.dark textarea {
                             <label for="adult_count" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Dewasa</label>
                             <input type="number" name="adult_count" id="adult_count" 
                                    class="form-input w-full" 
-                                   style="background-color: white !important; color: #1f2937 !important;"
                                    value="{{ old('adult_count', 1) }}" 
                                    min="1" max="10" required onchange="calculateTotal()">
                         </div>
@@ -254,7 +251,6 @@ html.dark input, html.dark select, html.dark textarea {
                             <label for="child_count" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Anak</label>
                             <input type="number" name="child_count" id="child_count" 
                                    class="form-input w-full" 
-                                   style="background-color: white !important; color: #1f2937 !important;"
                                    value="{{ old('child_count', 0) }}" 
                                    min="0" max="10" onchange="calculateTotal()">
                         </div>
@@ -321,7 +317,6 @@ html.dark input, html.dark select, html.dark textarea {
                 </label>
                 <input type="text" name="payment_reference" id="payment_reference" 
                        class="form-input w-full" 
-                       style="background-color: white !important; color: #1f2937 !important;"
                        value="{{ old('payment_reference') }}"
                        placeholder="No. Transaksi / ID Pembayaran">
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Opsional untuk non-tunai</p>
@@ -334,7 +329,6 @@ html.dark input, html.dark select, html.dark textarea {
                 </label>
                 <textarea name="notes" id="notes" rows="3" 
                           class="form-input w-full" 
-                          style="background-color: white !important; color: #1f2937 !important;"
                           placeholder="Catatan tambahan...">{{ old('notes') }}</textarea>
             </div>
 
