@@ -272,14 +272,33 @@
                     </div>
                     
                     <!-- Success Alert -->
-                    <div id="success-alert" class="hidden mb-6">
-                        <div class="flex items-center p-4 text-sm text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700 rounded-lg bg-green-50/90 dark:bg-green-900/50 backdrop-blur-sm">
-                            <svg class="flex-shrink-0 inline w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-                            </svg>
-                            <div>Berhasil! Silakan masuk ke akun Anda.</div>
+                    @if(session('success'))
+                        <div class="mb-6">
+                            <div class="flex items-center p-4 text-sm text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700 rounded-lg bg-green-50/90 dark:bg-green-900/50 backdrop-blur-sm">
+                                <svg class="flex-shrink-0 inline w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                                </svg>
+                                <div>{{ session('success') }}</div>
+                            </div>
                         </div>
-                    </div>
+                    @endif
+
+                    <!-- Error Alert -->
+                    @if($errors->any())
+                        <div class="mb-6">
+                            <div class="flex items-center p-4 text-sm text-red-800 dark:text-red-200 border border-red-300 dark:border-red-700 rounded-lg bg-red-50/90 dark:bg-red-900/50 backdrop-blur-sm">
+                                <svg class="flex-shrink-0 inline w-4 h-4 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd"/>
+                                </svg>
+                                <div>
+                                    @foreach($errors->all() as $error)
+                                        {{ $error }}
+                                        @if(!$loop->last)<br>@endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                     
                     <form class="space-y-6" action="{{ route('login') }}" method="POST">
                         @csrf
@@ -295,8 +314,9 @@
                                 <input type="email" 
                                        name="email" 
                                        id="email" 
-                                       class="input-focus bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-4" 
+                                       class="input-focus bg-white dark:bg-gray-700 border @error('email') border-red-300 dark:border-red-600 @else border-gray-300 dark:border-gray-600 @enderror text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-4" 
                                        placeholder="name@company.com" 
+                                       value="{{ old('email') }}" 
                                        required>
                             </div>
                             <div id="email-error" class="hidden mt-2 text-sm text-red-600 dark:text-red-400"></div>
@@ -315,7 +335,7 @@
                                        name="password" 
                                        id="password" 
                                        placeholder="••••••••" 
-                                       class="input-focus bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-4 pr-12" 
+                                       class="input-focus bg-white dark:bg-gray-700 border @error('password') border-red-300 dark:border-red-600 @else border-gray-300 dark:border-gray-600 @enderror text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-4 pr-12" 
                                        required>
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                                     <button type="button" onclick="togglePassword()" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300 transition-colors">

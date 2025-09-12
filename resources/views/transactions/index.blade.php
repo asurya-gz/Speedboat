@@ -5,11 +5,11 @@
 @section('content')
 <div class="max-w-7xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6 shadow-sm">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800">Daftar Transaksi</h2>
-                <p class="text-gray-600 mt-1">Kelola semua transaksi penjualan tiket</p>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Daftar Transaksi</h2>
+                <p class="text-gray-600 dark:text-gray-300 mt-1">Kelola semua transaksi penjualan tiket</p>
             </div>
             <div class="flex space-x-3">
                 <a href="{{ route('transactions.create') }}" class="btn btn-primary">
@@ -29,10 +29,10 @@
     </div>
 
     <!-- Transactions Table -->
-    <div class="bg-white rounded-lg shadow-sm">
-        <div class="px-6 py-4 border-b border-gray-200">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-gray-900">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                     Transaksi Terbaru ({{ $transactions->total() }} total)
                 </h3>
                 <div class="flex items-center space-x-2">
@@ -172,7 +172,7 @@
                     <!-- Custom pagination for single page with arrows -->
                     <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center space-x-1">
                         <!-- Previous Button (disabled) -->
-                        <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 cursor-not-allowed rounded-l-md">
+                        <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 dark:text-gray-500 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 cursor-not-allowed rounded-l-md">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                             </svg>
@@ -184,7 +184,7 @@
                         </span>
                         
                         <!-- Next Button (disabled) -->
-                        <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 cursor-not-allowed rounded-r-md">
+                        <span class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-300 dark:text-gray-500 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 cursor-not-allowed rounded-r-md">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                             </svg>
@@ -196,13 +196,13 @@
     </div>
 
     @if(session('success'))
-    <div class="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+    <div class="mt-4 bg-green-100 dark:bg-green-900/50 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-300 px-4 py-3 rounded">
         {{ session('success') }}
     </div>
     @endif
 
     @if($errors->any())
-    <div class="mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+    <div class="mt-4 bg-red-100 dark:bg-red-900/50 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded">
         <ul class="list-disc list-inside">
             @foreach($errors->all() as $error)
                 <li>{{ $error }}</li>

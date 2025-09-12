@@ -15,6 +15,12 @@
     line-height: 1.25rem;
 }
 
+html.dark .form-input, html.dark .form-select {
+    background-color: #374151 !important;
+    color: #f9fafb !important;
+    border: 1px solid #4b5563 !important;
+}
+
 .form-input:focus, .form-select:focus {
     outline: none !important;
     border-color: #3b82f6 !important;
@@ -23,8 +29,17 @@
     color: #1f2937 !important;
 }
 
+html.dark .form-input:focus, html.dark .form-select:focus {
+    background-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
 .form-input::placeholder {
     color: #9ca3af !important;
+}
+
+html.dark .form-input::placeholder {
+    color: #6b7280 !important;
 }
 
 /* Pastikan textarea juga terlihat */
@@ -34,10 +49,20 @@ textarea.form-input {
     resize: vertical;
 }
 
+html.dark textarea.form-input {
+    background-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
 /* Fix untuk select options */
 .form-select option {
     background-color: #ffffff !important;
     color: #1f2937 !important;
+}
+
+html.dark .form-select option {
+    background-color: #374151 !important;
+    color: #f9fafb !important;
 }
 
 /* Fix untuk radio buttons */
@@ -54,6 +79,10 @@ input[type="radio"] {
     border: 2px solid #e5e7eb;
 }
 
+html.dark .payment-option {
+    border: 2px solid #4b5563;
+}
+
 .payment-option:hover {
     border-color: #bfdbfe !important;
     background-color: #f8fafc !important;
@@ -61,10 +90,21 @@ input[type="radio"] {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+html.dark .payment-option:hover {
+    border-color: #3b82f6 !important;
+    background-color: #1f2937 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
 .payment-option.selected {
     border-color: #3b82f6 !important;
     background-color: #eff6ff !important;
     box-shadow: 0 0 0 1px #3b82f6, 0 4px 6px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .payment-option.selected {
+    background-color: #1e3a8a !important;
+    box-shadow: 0 0 0 1px #3b82f6, 0 4px 6px rgba(59, 130, 246, 0.3);
 }
 
 .payment-option.selected::before {
@@ -89,20 +129,30 @@ input[type="number"] {
     color: #1f2937 !important;
 }
 
+html.dark input[type="number"] {
+    background-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
 /* Ensure all form elements are visible */
 input, select, textarea {
     background-color: #ffffff !important;
     color: #1f2937 !important;
 }
+
+html.dark input, html.dark select, html.dark textarea {
+    background-color: #374151 !important;
+    color: #f9fafb !important;
+}
 </style>
 
 <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6 shadow-sm">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800">Jual Tiket Baru</h2>
-                <p class="text-gray-600 mt-1">Pilih jadwal dan input data penumpang</p>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Jual Tiket Baru</h2>
+                <p class="text-gray-600 dark:text-gray-300 mt-1">Pilih jadwal dan input data penumpang</p>
             </div>
             <div class="flex space-x-3">
                 <a href="{{ route('transactions.index') }}" class="btn btn-info">
@@ -122,9 +172,9 @@ input, select, textarea {
     </div>
 
     <!-- Form Penjualan Tiket -->
-    <div class="bg-white rounded-lg shadow-sm">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">Form Penjualan Tiket</h3>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Form Penjualan Tiket</h3>
         </div>
         
         <form action="{{ route('transactions.store') }}" method="POST" class="p-6" id="ticketForm">
@@ -132,7 +182,7 @@ input, select, textarea {
             
             <!-- Pilih Jadwal -->
             <div class="mb-6">
-                <label for="schedule_id" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="schedule_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Pilih Jadwal Keberangkatan *
                 </label>
                 <select name="schedule_id" id="schedule_id" 
@@ -156,16 +206,16 @@ input, select, textarea {
             </div>
 
             <!-- Info Harga -->
-            <div class="mb-6 p-4 bg-blue-50 rounded-lg" id="priceInfo" style="display: none;">
-                <h4 class="font-semibold text-blue-800 mb-2">Informasi Harga</h4>
+            <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/50 rounded-lg" id="priceInfo" style="display: none;">
+                <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-2">Informasi Harga</h4>
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <span class="text-blue-600">Dewasa:</span>
-                        <span class="font-semibold text-blue-800" id="adultPrice">-</span>
+                        <span class="text-blue-600 dark:text-blue-400">Dewasa:</span>
+                        <span class="font-semibold text-blue-800 dark:text-blue-300" id="adultPrice">-</span>
                     </div>
                     <div>
-                        <span class="text-blue-600">Anak:</span>
-                        <span class="font-semibold text-blue-800" id="childPrice">-</span>
+                        <span class="text-blue-600 dark:text-blue-400">Anak:</span>
+                        <span class="font-semibold text-blue-800 dark:text-blue-300" id="childPrice">-</span>
                     </div>
                 </div>
             </div>
@@ -173,7 +223,7 @@ input, select, textarea {
             <!-- Data Penumpang -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                    <label for="passenger_name" class="block text-sm font-medium text-gray-700 mb-2">
+                    <label for="passenger_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Nama Penumpang Utama *
                     </label>
                     <input type="text" name="passenger_name" id="passenger_name" 
@@ -188,12 +238,12 @@ input, select, textarea {
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Jumlah Penumpang *
                     </label>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label for="adult_count" class="block text-xs text-gray-500 mb-1">Dewasa</label>
+                            <label for="adult_count" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Dewasa</label>
                             <input type="number" name="adult_count" id="adult_count" 
                                    class="form-input w-full" 
                                    style="background-color: white !important; color: #1f2937 !important;"
@@ -201,7 +251,7 @@ input, select, textarea {
                                    min="1" max="10" required onchange="calculateTotal()">
                         </div>
                         <div>
-                            <label for="child_count" class="block text-xs text-gray-500 mb-1">Anak</label>
+                            <label for="child_count" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Anak</label>
                             <input type="number" name="child_count" id="child_count" 
                                    class="form-input w-full" 
                                    style="background-color: white !important; color: #1f2937 !important;"
@@ -216,46 +266,46 @@ input, select, textarea {
             </div>
 
             <!-- Total Harga -->
-            <div class="mb-6 p-4 bg-green-50 rounded-lg" id="totalSection" style="display: none;">
+            <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/50 rounded-lg" id="totalSection" style="display: none;">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h4 class="font-semibold text-green-800">Total Pembayaran</h4>
-                        <p class="text-sm text-green-600" id="breakdown">-</p>
+                        <h4 class="font-semibold text-green-800 dark:text-green-300">Total Pembayaran</h4>
+                        <p class="text-sm text-green-600 dark:text-green-400" id="breakdown">-</p>
                     </div>
-                    <div class="text-2xl font-bold text-green-800" id="totalAmount">Rp 0</div>
+                    <div class="text-2xl font-bold text-green-800 dark:text-green-300" id="totalAmount">Rp 0</div>
                 </div>
             </div>
 
             <!-- Metode Pembayaran -->
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Metode Pembayaran *
                 </label>
                 <div class="grid grid-cols-3 gap-4">
-                    <label class="payment-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label class="payment-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                         <input type="radio" name="payment_method" value="cash" class="mr-3" 
                                {{ old('payment_method') == 'cash' ? 'checked' : '' }} onchange="togglePaymentFields()">
                         <div>
-                            <div class="font-medium text-gray-700">Tunai</div>
-                            <div class="text-xs text-gray-500">Bayar langsung</div>
+                            <div class="font-medium text-gray-700 dark:text-gray-300">Tunai</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Bayar langsung</div>
                         </div>
                     </label>
                     
-                    <label class="payment-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label class="payment-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                         <input type="radio" name="payment_method" value="transfer" class="mr-3"
                                {{ old('payment_method') == 'transfer' ? 'checked' : '' }} onchange="togglePaymentFields()">
                         <div>
-                            <div class="font-medium text-gray-700">Transfer</div>
-                            <div class="text-xs text-gray-500">Bank Transfer</div>
+                            <div class="font-medium text-gray-700 dark:text-gray-300">Transfer</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Bank Transfer</div>
                         </div>
                     </label>
                     
-                    <label class="payment-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                    <label class="payment-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                         <input type="radio" name="payment_method" value="qris" class="mr-3"
                                {{ old('payment_method') == 'qris' ? 'checked' : '' }} onchange="togglePaymentFields()">
                         <div>
-                            <div class="font-medium text-gray-700">QRIS</div>
-                            <div class="text-xs text-gray-500">Scan QR</div>
+                            <div class="font-medium text-gray-700 dark:text-gray-300">QRIS</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Scan QR</div>
                         </div>
                     </label>
                 </div>
@@ -266,7 +316,7 @@ input, select, textarea {
 
             <!-- Payment Reference (for non-cash) -->
             <div class="mb-6" id="paymentRefSection" style="display: none;">
-                <label for="payment_reference" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="payment_reference" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Referensi Pembayaran
                 </label>
                 <input type="text" name="payment_reference" id="payment_reference" 
@@ -274,12 +324,12 @@ input, select, textarea {
                        style="background-color: white !important; color: #1f2937 !important;"
                        value="{{ old('payment_reference') }}"
                        placeholder="No. Transaksi / ID Pembayaran">
-                <p class="mt-1 text-xs text-gray-500">Opsional untuk non-tunai</p>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Opsional untuk non-tunai</p>
             </div>
 
             <!-- Catatan -->
             <div class="mb-6">
-                <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Catatan (Opsional)
                 </label>
                 <textarea name="notes" id="notes" rows="3" 
@@ -289,7 +339,7 @@ input, select, textarea {
             </div>
 
             <!-- Submit Buttons -->
-            <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200">
+            <div class="flex justify-end space-x-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <a href="{{ route('dashboard') }}" class="btn btn-secondary">
                     Batal
                 </a>

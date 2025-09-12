@@ -10,7 +10,7 @@ class DestinationController extends Controller
 {
     public function index()
     {
-        $destinations = Destination::where('is_active', true)->get();
+        $destinations = Destination::all();
         return view('destinations.index', compact('destinations'));
     }
 
@@ -33,7 +33,10 @@ class DestinationController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        Destination::create($request->all());
+        $data = $request->only(['name', 'code', 'adult_price', 'child_price', 'description']);
+        $data['is_active'] = $request->has('is_active');
+
+        Destination::create($data);
         return redirect()->route('destinations.index')->with('success', 'Destinasi berhasil ditambahkan');
     }
 
@@ -61,7 +64,10 @@ class DestinationController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $destination->update($request->all());
+        $data = $request->only(['name', 'code', 'adult_price', 'child_price', 'description']);
+        $data['is_active'] = $request->has('is_active');
+
+        $destination->update($data);
         return redirect()->route('destinations.index')->with('success', 'Destinasi berhasil diupdate');
     }
 

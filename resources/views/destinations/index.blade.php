@@ -3,12 +3,14 @@
 @section('title', 'Daftar Destinasi')
 
 @section('header-actions')
-    <a href="{{ route('destinations.create') }}" class="btn btn-primary">
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        Tambah Destinasi
-    </a>
+    @if(!Auth::user()->isKasir())
+        <a href="{{ route('destinations.create') }}" class="btn btn-primary">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            Tambah Destinasi
+        </a>
+    @endif
 @endsection
 
 @section('content')
@@ -122,15 +124,23 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg>
                     <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Belum ada destinasi</h3>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Tambahkan destinasi speedboat pertama Anda</p>
-                    <div class="mt-6">
-                        <a href="{{ route('destinations.create') }}" class="btn btn-primary">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            Tambah Destinasi
-                        </a>
-                    </div>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        @if(Auth::user()->isKasir())
+                            Hubungi administrator untuk menambahkan destinasi
+                        @else
+                            Tambahkan destinasi speedboat pertama Anda
+                        @endif
+                    </p>
+                    @if(!Auth::user()->isKasir())
+                        <div class="mt-6">
+                            <a href="{{ route('destinations.create') }}" class="btn btn-primary">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Tambah Destinasi
+                            </a>
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>

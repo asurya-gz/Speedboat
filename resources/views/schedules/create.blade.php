@@ -20,27 +20,31 @@
                 
                 <!-- Destinasi -->
                 <div>
-                    <label for="destination_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label for="destination_search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                         Destinasi
                     </label>
-                    <select class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 @error('destination_id') border-red-500 @enderror" 
-                            id="destination_id" 
-                            name="destination_id" 
-                            required>
-                        <option value="">Pilih Destinasi...</option>
-                        @foreach($destinations as $destination)
-                            <option value="{{ $destination->id }}" 
-                                    {{ old('destination_id') == $destination->id ? 'selected' : '' }}
-                                    data-adult-price="{{ $destination->adult_price }}"
-                                    data-child-price="{{ $destination->child_price }}">
-                                {{ $destination->code }} - {{ $destination->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" 
+                               class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('destination_id') border-red-500 @enderror" 
+                               id="destination_search" 
+                               placeholder="Ketik untuk mencari destinasi..."
+                               autocomplete="off">
+                        <input type="hidden" id="destination_id" name="destination_id" value="{{ old('destination_id') }}" required>
+                        
+                        <!-- Dropdown hasil pencarian -->
+                        <div id="destination_dropdown" class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto">
+                            <!-- Hasil akan dimuat di sini -->
+                        </div>
+                    </div>
                     @error('destination_id')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
@@ -180,22 +184,123 @@
 
 @push('scripts')
 <script>
-    document.getElementById('destination_id').addEventListener('change', function() {
-        const selected = this.options[this.selectedIndex];
-        const pricePreview = document.getElementById('price-preview');
+    const destinations = @json(collect($destinations)->map(function($destination) {
+        return [
+            'id' => $destination->id,
+            'name' => $destination->name,
+            'code' => $destination->code,
+            'adult_price' => $destination->adult_price,
+            'child_price' => $destination->child_price,
+            'display' => $destination->code . ' - ' . $destination->name
+        ];
+    })->values()->toArray());
+
+    const searchInput = document.getElementById('destination_search');
+    const hiddenInput = document.getElementById('destination_id');
+    const dropdown = document.getElementById('destination_dropdown');
+    const pricePreview = document.getElementById('price-preview');
+    
+    let selectedDestination = null;
+
+    // Set initial value if editing
+    const initialId = hiddenInput.value;
+    if (initialId) {
+        const initial = destinations.find(d => d.id == initialId);
+        if (initial) {
+            searchInput.value = initial.display;
+            selectedDestination = initial;
+            updatePricePreview(initial);
+        }
+    }
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
         
-        if (selected.value) {
-            const adultPrice = selected.getAttribute('data-adult-price');
-            const childPrice = selected.getAttribute('data-child-price');
-            
+        if (query.length < 1) {
+            dropdown.classList.add('hidden');
+            hiddenInput.value = '';
+            selectedDestination = null;
+            pricePreview.classList.add('hidden');
+            return;
+        }
+
+        const filteredDestinations = destinations.filter(destination => 
+            destination.name.toLowerCase().includes(query) || 
+            destination.code.toLowerCase().includes(query) ||
+            destination.display.toLowerCase().includes(query)
+        );
+
+        renderDropdown(filteredDestinations);
+    });
+
+    searchInput.addEventListener('focus', function() {
+        if (this.value.length >= 1) {
+            const query = this.value.toLowerCase();
+            const filteredDestinations = destinations.filter(destination => 
+                destination.name.toLowerCase().includes(query) || 
+                destination.code.toLowerCase().includes(query) ||
+                destination.display.toLowerCase().includes(query)
+            );
+            renderDropdown(filteredDestinations);
+        }
+    });
+
+    searchInput.addEventListener('blur', function() {
+        // Delay hiding to allow click on dropdown
+        setTimeout(() => {
+            dropdown.classList.add('hidden');
+        }, 200);
+    });
+
+    function renderDropdown(filteredDestinations) {
+        if (filteredDestinations.length === 0) {
+            dropdown.innerHTML = '<div class="px-4 py-2 text-gray-500 dark:text-gray-400">Tidak ada destinasi ditemukan</div>';
+        } else {
+            dropdown.innerHTML = filteredDestinations.map(destination => `
+                <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0" 
+                     onclick="selectDestination(${destination.id}, '${destination.display}', ${destination.adult_price}, ${destination.child_price})">
+                    <div class="flex items-center">
+                        <span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium mr-2">
+                            ${destination.code}
+                        </span>
+                        <span class="text-gray-900 dark:text-white">${destination.name}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Dewasa: Rp ${new Intl.NumberFormat('id-ID').format(destination.adult_price)} | 
+                        Anak: Rp ${new Intl.NumberFormat('id-ID').format(destination.child_price)}
+                    </div>
+                </div>
+            `).join('');
+        }
+        dropdown.classList.remove('hidden');
+    }
+
+    function selectDestination(id, display, adultPrice, childPrice) {
+        searchInput.value = display;
+        hiddenInput.value = id;
+        selectedDestination = { id, display, adult_price: adultPrice, child_price: childPrice };
+        dropdown.classList.add('hidden');
+        
+        updatePricePreview({ adult_price: adultPrice, child_price: childPrice });
+    }
+
+    function updatePricePreview(destination) {
+        if (destination) {
             document.getElementById('adult-price').textContent = 'Rp ' + 
-                new Intl.NumberFormat('id-ID').format(adultPrice);
+                new Intl.NumberFormat('id-ID').format(destination.adult_price);
             document.getElementById('child-price').textContent = 'Rp ' + 
-                new Intl.NumberFormat('id-ID').format(childPrice);
+                new Intl.NumberFormat('id-ID').format(destination.child_price);
             
             pricePreview.classList.remove('hidden');
         } else {
             pricePreview.classList.add('hidden');
+        }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.add('hidden');
         }
     });
 </script>
