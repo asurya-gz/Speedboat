@@ -73,8 +73,20 @@ class DestinationController extends Controller
 
     public function destroy(Destination $destination)
     {
-        $destination->update(['is_active' => false]);
+        $destination->delete();
         return redirect()->route('destinations.index')->with('success', 'Destinasi berhasil dihapus');
+    }
+
+    /**
+     * Toggle destination active status.
+     */
+    public function toggleStatus(Destination $destination)
+    {
+        $destination->update(['is_active' => !$destination->is_active]);
+
+        $status = $destination->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        return redirect()->route('destinations.index')
+            ->with('success', "Destinasi berhasil {$status}.");
     }
 
     public function export()

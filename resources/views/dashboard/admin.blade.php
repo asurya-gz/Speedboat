@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Admin')
+@section('title', 'Dashboard')
+@section('description', 'Dashboard Speedboat Ticketing System - Kelola destinasi, jadwal, transaksi, dan user dalam satu platform terintegrasi.')
 
 @section('content')
 <div class="max-w-7xl mx-auto">
@@ -9,7 +10,13 @@
         <div class="flex items-center justify-between">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Selamat Datang, {{ $user->name }}!</h2>
-                <p class="text-gray-600 dark:text-gray-300 mt-1">Dashboard Administrator - Kelola seluruh sistem speedboat</p>
+                @if($user->role === 'admin')
+                    <p class="text-gray-600 dark:text-gray-300 mt-1">Dashboard Administrator - Kelola seluruh sistem speedboat</p>
+                @elseif($user->role === 'kasir')
+                    <p class="text-gray-600 dark:text-gray-300 mt-1">Dashboard Kasir - Kelola penjualan tiket speedboat</p>
+                @elseif($user->role === 'boarding')
+                    <p class="text-gray-600 dark:text-gray-300 mt-1">Dashboard Boarding - Kelola boarding dan validasi tiket</p>
+                @endif
             </div>
             <div class="flex-shrink-0">
                 <svg class="w-16 h-16 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,38 +100,106 @@
 
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Kelola Destinasi</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Tambah, edit, atau hapus destinasi speedboat</p>
-            <a href="{{ route('destinations.index') }}" class="btn btn-primary">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                </svg>
-                Kelola Destinasi
-            </a>
-        </div>
+        @if($user->role === 'admin')
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Kelola Destinasi</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Tambah, edit, atau hapus destinasi speedboat</p>
+                <a href="{{ route('destinations.index') }}" class="btn btn-primary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    </svg>
+                    Kelola Destinasi
+                </a>
+            </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Kelola Jadwal</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Atur jadwal keberangkatan speedboat</p>
-            <a href="{{ route('schedules.index') }}" class="btn btn-success">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                Kelola Jadwal
-            </a>
-        </div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Kelola Jadwal</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Atur jadwal keberangkatan speedboat</p>
+                <a href="{{ route('schedules.index') }}" class="btn btn-success">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Kelola Jadwal
+                </a>
+            </div>
 
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Kelola User</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Tambah dan kelola user sistem</p>
-            <a href="{{ route('users.index') }}" class="btn btn-info">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                </svg>
-                Kelola User
-            </a>
-        </div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Kelola User</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Tambah dan kelola user sistem</p>
+                <a href="{{ route('users.index') }}" class="btn btn-info">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    Kelola User
+                </a>
+            </div>
+        @elseif($user->role === 'kasir')
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Penjualan Tiket</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Jual tiket speedboat untuk penumpang</p>
+                <a href="{{ route('transactions.create') }}" class="btn btn-success">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
+                    </svg>
+                    Jual Tiket
+                </a>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cek Jadwal</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Lihat jadwal keberangkatan yang tersedia</p>
+                <a href="{{ route('schedules.index') }}" class="btn btn-primary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Lihat Jadwal
+                </a>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Kelola Transaksi</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Lihat dan kelola transaksi penjualan</p>
+                <a href="{{ route('transactions.index') }}" class="btn btn-info">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Lihat Transaksi
+                </a>
+            </div>
+        @elseif($user->role === 'boarding')
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Validasi QR Code</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Scan QR code tiket untuk validasi boarding</p>
+                <a href="{{ route('tickets.validate.form') }}" class="btn btn-primary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h4m0 0V4m0 4h4m0 0V4m0 4v4"></path>
+                    </svg>
+                    Scan QR Code
+                </a>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cek Jadwal</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Lihat jadwal keberangkatan hari ini</p>
+                <a href="{{ route('schedules.index') }}" class="btn btn-success">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Lihat Jadwal
+                </a>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status Boarding</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4 text-sm">Monitor status boarding penumpang</p>
+                <a href="{{ route('schedules.index') }}" class="btn btn-info">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Lihat Status
+                </a>
+            </div>
+        @endif
     </div>
 
     <!-- Recent Activity -->

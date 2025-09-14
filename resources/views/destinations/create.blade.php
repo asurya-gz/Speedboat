@@ -63,7 +63,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Harga Dewasa -->
                     <div>
                         <label for="adult_price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -76,14 +76,14 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" 
+                            <input type="text" 
                                    class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('adult_price') border-red-500 @enderror" 
-                                   id="adult_price" 
-                                   name="adult_price" 
+                                   id="adult_price_display" 
                                    value="{{ old('adult_price') }}"
-                                   placeholder="50000"
-                                   min="0"
+                                   placeholder="50.000"
+                                   inputmode="numeric"
                                    required>
+                            <input type="hidden" id="adult_price" name="adult_price" value="{{ old('adult_price') }}"
                         </div>
                         @error('adult_price')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -102,16 +102,42 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" 
+                            <input type="text" 
                                    class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('child_price') border-red-500 @enderror" 
-                                   id="child_price" 
-                                   name="child_price" 
+                                   id="child_price_display" 
                                    value="{{ old('child_price') }}"
-                                   placeholder="30000"
-                                   min="0"
+                                   placeholder="30.000"
+                                   inputmode="numeric"
                                    required>
+                            <input type="hidden" id="child_price" name="child_price" value="{{ old('child_price') }}"
                         </div>
                         @error('child_price')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    
+                    <!-- Harga Balita -->
+                    <div>
+                        <label for="toddler_price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <svg class="w-4 h-4 inline text-pink-600 dark:text-pink-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Harga Balita
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="text" 
+                                   class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('toddler_price') border-red-500 @enderror" 
+                                   id="toddler_price_display" 
+                                   value="{{ old('toddler_price') }}"
+                                   placeholder="15.000"
+                                   inputmode="numeric"
+                                   required>
+                            <input type="hidden" id="toddler_price" name="toddler_price" value="{{ old('toddler_price') }}"
+                        </div>
+                        @error('toddler_price')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
@@ -178,6 +204,87 @@
     // Auto uppercase code field
     document.getElementById('code').addEventListener('input', function(e) {
         e.target.value = e.target.value.toUpperCase();
+    });
+
+    // Format price inputs with thousand separators
+    function formatPrice(input) {
+        // Remove all non-digit characters
+        let value = input.value.replace(/\D/g, '');
+        
+        // Add thousand separators (dots) - use manual formatting to ensure consistency
+        if (value) {
+            // Convert to number and format manually with dots
+            let num = parseInt(value);
+            value = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+        
+        input.value = value;
+    }
+
+    // Allow only numbers and handle formatting for price inputs
+    function handlePriceInput(e) {
+        const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'Home', 'End', 'ArrowLeft', 'ArrowRight', 'Clear', 'Copy', 'Paste'];
+        
+        // Allow special keys
+        if (allowedKeys.indexOf(e.key) !== -1) {
+            return;
+        }
+        
+        // Prevent if not a number
+        if (!/^\d$/.test(e.key)) {
+            e.preventDefault();
+        }
+    }
+
+    // Get display and hidden inputs
+    const adultPriceDisplay = document.getElementById('adult_price_display');
+    const adultPriceHidden = document.getElementById('adult_price');
+    const childPriceDisplay = document.getElementById('child_price_display');
+    const childPriceHidden = document.getElementById('child_price');
+    const toddlerPriceDisplay = document.getElementById('toddler_price_display');
+    const toddlerPriceHidden = document.getElementById('toddler_price');
+
+    // Function to update hidden input with unformatted value
+    function updateHiddenInput(displayInput, hiddenInput) {
+        const unformattedValue = displayInput.value.replace(/\D/g, '');
+        hiddenInput.value = unformattedValue;
+    }
+
+    // Apply to adult price input
+    adultPriceDisplay.addEventListener('keydown', handlePriceInput);
+    adultPriceDisplay.addEventListener('input', function() {
+        formatPrice(this);
+        updateHiddenInput(this, adultPriceHidden);
+    });
+
+    // Apply to child price input
+    childPriceDisplay.addEventListener('keydown', handlePriceInput);
+    childPriceDisplay.addEventListener('input', function() {
+        formatPrice(this);
+        updateHiddenInput(this, childPriceHidden);
+    });
+
+    // Apply to toddler price input
+    toddlerPriceDisplay.addEventListener('keydown', handlePriceInput);
+    toddlerPriceDisplay.addEventListener('input', function() {
+        formatPrice(this);
+        updateHiddenInput(this, toddlerPriceHidden);
+    });
+
+    // Format existing values on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        if (adultPriceDisplay.value) {
+            formatPrice(adultPriceDisplay);
+            updateHiddenInput(adultPriceDisplay, adultPriceHidden);
+        }
+        if (childPriceDisplay.value) {
+            formatPrice(childPriceDisplay);
+            updateHiddenInput(childPriceDisplay, childPriceHidden);
+        }
+        if (toddlerPriceDisplay.value) {
+            formatPrice(toddlerPriceDisplay);
+            updateHiddenInput(toddlerPriceDisplay, toddlerPriceHidden);
+        }
     });
 </script>
 @endpush

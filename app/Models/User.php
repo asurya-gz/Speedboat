@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role',
         'is_active',
         'last_login_at',
+        'must_change_password',
     ];
 
     /**
@@ -45,6 +46,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
         'is_active' => 'boolean',
+        'must_change_password' => 'boolean',
     ];
 
     // Role constants

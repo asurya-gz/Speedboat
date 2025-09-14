@@ -106,12 +106,10 @@
                            value="{{ old('capacity', 50) }}"
                            placeholder="50"
                            min="1"
-                           max="200"
                            required>
                     @error('capacity')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Maksimal 200 penumpang per jadwal</p>
                 </div>
 
                 <!-- Status Aktif -->
@@ -184,16 +182,18 @@
 
 @push('scripts')
 <script>
-    const destinations = @json(collect($destinations)->map(function($destination) {
-        return [
-            'id' => $destination->id,
-            'name' => $destination->name,
-            'code' => $destination->code,
-            'adult_price' => $destination->adult_price,
-            'child_price' => $destination->child_price,
-            'display' => $destination->code . ' - ' . $destination->name
-        ];
-    })->values()->toArray());
+    const destinations = [
+        @foreach($destinations as $destination)
+        {
+            id: {{ $destination->id }},
+            name: @json($destination->name),
+            code: @json($destination->code),
+            adult_price: {{ $destination->adult_price }},
+            child_price: {{ $destination->child_price }},
+            display: @json($destination->code . ' - ' . $destination->name)
+        },
+        @endforeach
+    ];
 
     const searchInput = document.getElementById('destination_search');
     const hiddenInput = document.getElementById('destination_id');

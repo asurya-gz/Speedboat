@@ -5,7 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>{{ config('app.name', 'Speedboat Ticketing') }}</title>
+    <title>@yield('title', 'Speedboat Ticketing System') - {{ config('app.name', 'Speedboat Ticketing') }}</title>
+    
+    <!-- Meta Description -->
+    <meta name="description" content="@yield('description', 'Sistem Manajemen Tiket Speedboat - Fast, Safe, Reliable. Kelola penjualan tiket, jadwal keberangkatan, dan data penumpang speedboat dengan mudah.')">
+    <meta name="keywords" content="speedboat, tiket, ticketing system, transportasi laut, booking, penjualan tiket">
+    <meta name="author" content="Speedboat Ticketing System">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('image/icon.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('image/icon.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('image/icon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.png') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    <meta name="theme-color" content="#3b82f6">
+    
+    <!-- Open Graph / Social Media Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="@yield('title', 'Speedboat Ticketing System')">
+    <meta property="og:description" content="@yield('description', 'Sistem Manajemen Tiket Speedboat - Fast, Safe, Reliable')">
+    <meta property="og:image" content="{{ asset('image/logo.png') }}">
+    <meta property="og:url" content="{{ url()->current() }}">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="@yield('title', 'Speedboat Ticketing System')">
+    <meta name="twitter:description" content="@yield('description', 'Sistem Manajemen Tiket Speedboat - Fast, Safe, Reliable')">
+    <meta name="twitter:image" content="{{ asset('image/logo.png') }}">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -217,7 +243,17 @@
                                     <p class="text-sm text-gray-900 dark:text-white">{{ Auth::user()->name }}</p>
                                     <p class="text-xs text-gray-500 dark:text-gray-400">{{ Auth::user()->email }}</p>
                                 </div>
-                                <form method="POST" action="{{ route('logout') }}">
+                                
+                                <!-- Change Password Menu -->
+                                <button onclick="openChangePasswordModal()" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                    </svg>
+                                    Ubah Password
+                                </button>
+                                
+                                <!-- Logout Form -->
+                                <form method="POST" action="{{ route('logout') }}"  class="border-t border-gray-100 dark:border-gray-700">
                                     @csrf
                                     <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                                         <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,7 +369,261 @@
         document.addEventListener('DOMContentLoaded', function() {
             updateThemeIcons();
         });
+        // Change Password Modal Functions
+        function openChangePasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            const modalContent = document.getElementById('changePasswordModalContent');
+            
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+            
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
+        }
+        
+        function closeChangePasswordModal() {
+            const modal = document.getElementById('changePasswordModal');
+            const modalContent = document.getElementById('changePasswordModalContent');
+            
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            modal.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+                // Reset form
+                document.getElementById('changePasswordForm').reset();
+                // Clear any error messages
+                const errorElements = document.querySelectorAll('.change-password-error');
+                errorElements.forEach(el => el.textContent = '');
+            }, 300);
+        }
     </script>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm hidden z-50 transition-opacity duration-300">
+        <div class="flex min-h-screen items-center justify-center p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full transform transition-all duration-300 scale-95" id="changePasswordModalContent">
+                <!-- Modal Header -->
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Ubah Password</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Body -->
+                <form id="changePasswordForm" onsubmit="submitChangePassword(event)">
+                    <div class="px-6 py-4 space-y-4">
+                        <div>
+                            <label for="current_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Password Saat Ini
+                            </label>
+                            <input type="password" id="current_password" name="current_password" required
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                   placeholder="Masukkan password saat ini">
+                            <div class="change-password-error text-red-500 text-xs mt-1" data-field="current_password"></div>
+                        </div>
+
+                        <div>
+                            <label for="new_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Password Baru
+                            </label>
+                            <input type="password" id="new_password" name="new_password" required
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                   placeholder="Masukkan password baru" 
+                                   minlength="8">
+                            <div class="change-password-error text-red-500 text-xs mt-1" data-field="new_password"></div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center">
+                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Min. 8 karakter dengan huruf besar, kecil, angka, dan karakter khusus
+                            </p>
+                        </div>
+
+                        <div>
+                            <label for="confirm_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Konfirmasi Password Baru
+                            </label>
+                            <input type="password" id="confirm_password" name="confirm_password" required
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                   placeholder="Konfirmasi password baru">
+                            <div class="change-password-error text-red-500 text-xs mt-1" data-field="confirm_password"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Modal Footer -->
+                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 flex justify-end space-x-3 rounded-b-xl">
+                        <button type="button" onclick="closeChangePasswordModal()" 
+                                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            Batal
+                        </button>
+                        <button type="submit" id="changePasswordBtn" 
+                                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 shadow-lg hover:shadow-xl">
+                            <span id="changePasswordText">Ubah Password</span>
+                            <svg id="changePasswordLoading" class="hidden animate-spin -ml-1 mr-2 h-4 w-4 inline" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Submit change password form
+        async function submitChangePassword(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const submitBtn = document.getElementById('changePasswordBtn');
+            const submitText = document.getElementById('changePasswordText');
+            const submitLoading = document.getElementById('changePasswordLoading');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.textContent = 'Mengubah...';
+            submitLoading.classList.remove('hidden');
+            
+            // Clear previous errors
+            const errorElements = document.querySelectorAll('.change-password-error');
+            errorElements.forEach(el => el.textContent = '');
+            
+            try {
+                const response = await fetch('{{ route("password.update") }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Success
+                    closeChangePasswordModal();
+                    showNotification('Password berhasil diubah!', 'success');
+                } else {
+                    // Handle validation errors
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(field => {
+                            const errorElement = document.querySelector(`[data-field="${field}"]`);
+                            if (errorElement) {
+                                errorElement.textContent = data.errors[field][0];
+                            }
+                        });
+                    } else {
+                        showNotification(data.message || 'Terjadi kesalahan', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Terjadi kesalahan sistem', 'error');
+            } finally {
+                // Reset loading state
+                submitBtn.disabled = false;
+                submitText.textContent = 'Ubah Password';
+                submitLoading.classList.add('hidden');
+            }
+        }
+        
+        // Simple notification function
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-md z-50 ${
+                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 
+                type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' : 
+                'bg-blue-100 text-blue-800 border border-blue-200'
+            }`;
+            notification.textContent = message;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // Add event listeners for change password modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('changePasswordModal');
+            
+            // Handle click outside modal
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeChangePasswordModal();
+                }
+            });
+            
+            // Handle ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+                    closeChangePasswordModal();
+                }
+            });
+        });
+    </script>
+    
+    <!-- Custom styles for change password modal animations -->
+    <style>
+        /* Change Password Modal styles */
+        #changePasswordModal {
+            transition: opacity 300ms ease-in-out;
+        }
+        
+        #changePasswordModal.hidden {
+            opacity: 0;
+        }
+        
+        #changePasswordModalContent {
+            transition: transform 300ms ease-in-out;
+        }
+        
+        #changePasswordModalContent.scale-95 {
+            transform: scale(0.95);
+        }
+        
+        #changePasswordModalContent.scale-100 {
+            transform: scale(1);
+        }
+        
+        /* Backdrop blur effect */
+        .backdrop-blur-sm {
+            backdrop-filter: blur(4px);
+        }
+        
+        /* Loading animation */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
     
     @stack('scripts')
 </body>

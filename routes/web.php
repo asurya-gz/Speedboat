@@ -33,6 +33,13 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
+    
+    // Password change routes for first-time login
+    Route::get('/password/change', [AuthController::class, 'showChangePassword'])->name('password.change.form');
+    Route::post('/password/change', [AuthController::class, 'changePassword'])->name('password.change');
+    
+    // Password update route for modal
+    Route::post('/password/update', [AuthController::class, 'updatePassword'])->name('password.update');
 });
 
 // Protected routes with role-based access
@@ -40,7 +47,9 @@ Route::middleware(['auth', 'role'])->group(function () {
     // Admin routes - full access to destinations, schedules, and users CRUD
     Route::middleware('role:admin')->group(function () {
         Route::resource('destinations', DestinationController::class);
+        Route::patch('destinations/{destination}/toggle-status', [DestinationController::class, 'toggleStatus'])->name('destinations.toggle-status');
         Route::resource('schedules', ScheduleController::class);
+        Route::get('users/export/csv', [UserController::class, 'export'])->name('users.export');
         Route::resource('users', UserController::class);
         Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
     });

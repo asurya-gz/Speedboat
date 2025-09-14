@@ -1,15 +1,16 @@
 @extends('layouts.app')
 
-@section('title', 'Detail Transaksi - ' . $transaction->transaction_code)
+@section('title', 'Detail Transaksi ' . $transaction->transaction_code)
+@section('description', 'Detail lengkap transaksi speedboat dengan kode ' . $transaction->transaction_code . ' - Informasi penumpang, jadwal keberangkatan, dan status pembayaran.')
 
 @section('content')
 <div class="max-w-4xl mx-auto">
     <!-- Header -->
-    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6 shadow-sm">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800">Detail Transaksi</h2>
-                <p class="text-gray-600 mt-1">{{ $transaction->transaction_code }}</p>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Detail Transaksi</h2>
+                <p class="text-gray-600 dark:text-gray-300 mt-1">{{ $transaction->transaction_code }}</p>
             </div>
             <div class="flex space-x-3">
                 <a href="{{ route('transactions.print', $transaction) }}" target="_blank" class="btn btn-success">
@@ -30,25 +31,25 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Transaction Info -->
-        <div class="bg-white rounded-lg shadow-sm">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Informasi Transaksi</h3>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Informasi Transaksi</h3>
             </div>
             
             <div class="p-6 space-y-4">
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Kode Transaksi</span>
-                    <span class="font-semibold">{{ $transaction->transaction_code }}</span>
+                    <span class="text-gray-600 dark:text-gray-400">Kode Transaksi</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->transaction_code }}</span>
                 </div>
                 
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Nama Penumpang</span>
-                    <span class="font-semibold">{{ $transaction->passenger_name }}</span>
+                    <span class="text-gray-600 dark:text-gray-400">Nama Penumpang</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->passenger_name }}</span>
                 </div>
                 
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Jumlah Penumpang</span>
-                    <span class="font-semibold">
+                    <span class="text-gray-600 dark:text-gray-400">Jumlah Penumpang</span>
+                    <span class="font-semibold dark:text-white">
                         {{ $transaction->adult_count }} Dewasa
                         @if($transaction->child_count > 0)
                             + {{ $transaction->child_count }} Anak
@@ -58,17 +59,17 @@
                 </div>
                 
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Total Pembayaran</span>
+                    <span class="text-gray-600 dark:text-gray-400">Total Pembayaran</span>
                     <span class="font-semibold text-lg text-green-600">Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</span>
                 </div>
                 
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Metode Pembayaran</span>
-                    <span class="font-semibold">{{ strtoupper($transaction->payment_method) }}</span>
+                    <span class="text-gray-600 dark:text-gray-400">Metode Pembayaran</span>
+                    <span class="font-semibold dark:text-white">{{ strtoupper($transaction->payment_method) }}</span>
                 </div>
                 
                 <div class="flex justify-between items-center">
-                    <span class="text-gray-600">Status Pembayaran</span>
+                    <span class="text-gray-600 dark:text-gray-400">Status Pembayaran</span>
                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                         {{ $transaction->payment_status === 'paid' ? 'bg-green-100 text-green-800' : 
                            ($transaction->payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
@@ -78,8 +79,8 @@
                 
                 @if($transaction->payment_reference)
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Referensi Pembayaran</span>
-                    <span class="font-semibold">{{ $transaction->payment_reference }}</span>
+                    <span class="text-gray-600 dark:text-gray-400">Referensi Pembayaran</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->payment_reference }}</span>
                 </div>
                 @endif
                 
@@ -134,46 +135,46 @@
         </div>
 
         <!-- Schedule Info -->
-        <div class="bg-white rounded-lg shadow-sm">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Informasi Jadwal</h3>
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Informasi Jadwal</h3>
             </div>
             
             <div class="p-6 space-y-4">
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Tujuan</span>
-                    <span class="font-semibold">{{ $transaction->schedule->destination->name }}</span>
+                    <span class="text-gray-600 dark:text-gray-400">Tujuan</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->destination->name }}</span>
                 </div>
                 
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Kode Tujuan</span>
-                    <span class="font-semibold">{{ $transaction->schedule->destination->code }}</span>
+                    <span class="text-gray-600 dark:text-gray-400">Kode Tujuan</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->destination->code }}</span>
                 </div>
                 
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Tanggal Keberangkatan</span>
-                    <span class="font-semibold">{{ $transaction->schedule->departure_date->format('d M Y') }}</span>
+                    <span class="text-gray-600 dark:text-gray-400">Tanggal Keberangkatan</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->departure_date->format('d M Y') }}</span>
                 </div>
                 
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Jam Keberangkatan</span>
-                    <span class="font-semibold">{{ $transaction->schedule->departure_time->format('H:i') }} WIB</span>
+                    <span class="text-gray-600 dark:text-gray-400">Jam Keberangkatan</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->departure_time->format('H:i') }} WIB</span>
                 </div>
                 
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Kapasitas Speedboat</span>
-                    <span class="font-semibold">{{ $transaction->schedule->capacity }} penumpang</span>
+                    <span class="text-gray-600 dark:text-gray-400">Kapasitas Speedboat</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->capacity }} penumpang</span>
                 </div>
                 
                 <div class="flex justify-between">
-                    <span class="text-gray-600">Kursi Tersedia</span>
-                    <span class="font-semibold">{{ $transaction->schedule->available_seats }} kursi</span>
+                    <span class="text-gray-600 dark:text-gray-400">Kursi Tersedia</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->available_seats }} kursi</span>
                 </div>
                 
                 @if($transaction->schedule->destination->description)
                 <div class="pt-4 border-t border-gray-200">
-                    <span class="text-gray-600 block mb-2">Deskripsi Tujuan</span>
-                    <p class="text-gray-900">{{ $transaction->schedule->destination->description }}</p>
+                    <span class="text-gray-600 dark:text-gray-400 block mb-2">Deskripsi Tujuan</span>
+                    <p class="text-gray-900 dark:text-white">{{ $transaction->schedule->destination->description }}</p>
                 </div>
                 @endif
             </div>
@@ -181,9 +182,9 @@
     </div>
 
     <!-- Tickets List -->
-    <div class="bg-white rounded-lg shadow-sm mt-6">
-        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h3 class="text-lg font-semibold text-gray-900">Daftar Tiket ({{ $transaction->tickets->count() }})</h3>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm mt-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Daftar Tiket ({{ $transaction->tickets->count() }})</h3>
             <a href="{{ route('transactions.print', $transaction) }}?autoprint=1" target="_blank" class="btn btn-primary btn-sm">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
@@ -194,36 +195,36 @@
         
         <div class="overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Kode Tiket
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Nama Penumpang
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Tipe
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Harga
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Status
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Validasi
                             </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @foreach($transaction->tickets as $ticket)
                         <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                                 {{ $ticket->ticket_code }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                                 {{ $ticket->passenger_name }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -232,7 +233,7 @@
                                     {{ $ticket->passenger_type === 'adult' ? 'Dewasa' : 'Anak' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                                 Rp {{ number_format($ticket->price, 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -242,14 +243,14 @@
                                     {{ ucfirst($ticket->status) }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                                 @if($ticket->validated_at)
                                     <div class="text-xs">
                                         <div class="text-green-600 font-medium">✅ Tervalidasi</div>
-                                        <div>{{ $ticket->validated_at->format('d M Y H:i') }}</div>
+                                        <div class="dark:text-gray-300">{{ $ticket->validated_at->format('d M Y H:i') }}</div>
                                     </div>
                                 @else
-                                    <span class="text-gray-400">Belum divalidasi</span>
+                                    <span class="text-gray-400 dark:text-gray-500">Belum divalidasi</span>
                                 @endif
                             </td>
                         </tr>

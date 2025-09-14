@@ -33,13 +33,15 @@
             }
         }
         
-        /* Thermal Printer 80mm width (approximately 300px) */
+        /* Horizontal ticket layout - wider format */
         .ticket {
-            width: 300px;
+            width: 600px;
             margin: 0 auto 30px;
-            padding: 10px;
+            padding: 15px;
             border: 2px dashed #000;
             background: #fff;
+            display: flex;
+            flex-direction: column;
         }
         
         .ticket-header {
@@ -67,14 +69,38 @@
         }
         
         .ticket-body {
-            font-size: 10px;
+            font-size: 11px;
             margin: 8px 0;
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+        }
+        
+        .ticket-left {
+            flex: 1;
+            padding-right: 15px;
+        }
+        
+        .ticket-center {
+            flex: 0 0 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-left: 1px dashed #000;
+            border-right: 1px dashed #000;
+            padding: 0 15px;
+        }
+        
+        .ticket-right {
+            flex: 1;
+            padding-left: 15px;
         }
         
         .ticket-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
             word-wrap: break-word;
         }
         
@@ -98,8 +124,14 @@
         }
         
         .qr-code img {
-            max-width: 80px;
+            max-width: 90px;
             height: auto;
+        }
+        
+        .section-divider {
+            border-bottom: 1px dashed #ccc;
+            margin: 8px 0;
+            padding-bottom: 4px;
         }
         
         .ticket-footer {
@@ -184,104 +216,107 @@
         
         <!-- Body -->
         <div class="ticket-body">
-            <!-- Transaction Info -->
-            <div class="ticket-row">
-                <span>No. Transaksi:</span>
-                <strong>{{ $transaction->transaction_code }}</strong>
+            <!-- Left Section -->
+            <div class="ticket-left">
+                <!-- Transaction Info -->
+                <div class="section-divider">
+                    <div style="font-weight: bold; margin-bottom: 6px;">INFORMASI TRANSAKSI</div>
+                </div>
+                <div class="ticket-row">
+                    <span>No. Transaksi:</span>
+                    <strong>{{ $transaction->transaction_code }}</strong>
+                </div>
+                <div class="ticket-row">
+                    <span>Kode Tiket:</span>
+                    <strong>{{ $ticket->ticket_code }}</strong>
+                </div>
+                
+                <!-- Passenger Info -->
+                <div class="section-divider">
+                    <div style="font-weight: bold; margin-bottom: 6px;">INFORMASI PENUMPANG</div>
+                </div>
+                <div class="ticket-row">
+                    <span>Nama:</span>
+                    <strong>{{ $ticket->passenger_name }}</strong>
+                </div>
+                <div class="ticket-row">
+                    <span>Tipe:</span>
+                    <strong>{{ $ticket->passenger_type === 'adult' ? 'DEWASA' : 'ANAK' }}</strong>
+                </div>
+                
+                <!-- Trip Info -->
+                <div class="section-divider">
+                    <div style="font-weight: bold; margin-bottom: 6px;">INFORMASI PERJALANAN</div>
+                </div>
+                <div class="ticket-row">
+                    <span>Tujuan:</span>
+                    <strong>{{ $transaction->schedule->destination->name }}</strong>
+                </div>
+                <div class="ticket-row">
+                    <span>Tanggal:</span>
+                    <strong>{{ $transaction->schedule->departure_date->format('d M Y') }}</strong>
+                </div>
+                <div class="ticket-row">
+                    <span>Jam:</span>
+                    <strong>{{ $transaction->schedule->departure_time->format('H:i') }} WIB</strong>
+                </div>
             </div>
             
-            <div class="ticket-row">
-                <span>Kode Tiket:</span>
-                <strong>{{ $ticket->ticket_code }}</strong>
+            <!-- Center Section - QR Code -->
+            <div class="ticket-center">
+                <div class="qr-code">
+                    <div style="margin-bottom: 6px; font-size: 10px; font-weight: bold;">SCAN UNTUK VALIDASI</div>
+                    {!! QrCode::size(90)->generate($ticket->qr_code) !!}
+                </div>
             </div>
             
-            <div class="ticket-divider"></div>
-            
-            <!-- Passenger Info -->
-            <div class="ticket-row">
-                <span>Nama:</span>
-                <strong>{{ $ticket->passenger_name }}</strong>
+            <!-- Right Section -->
+            <div class="ticket-right">
+                <!-- Payment Info -->
+                <div class="section-divider">
+                    <div style="font-weight: bold; margin-bottom: 6px;">INFORMASI PEMBAYARAN</div>
+                </div>
+                <div class="ticket-row">
+                    <span>Harga:</span>
+                    <strong>Rp {{ number_format($ticket->price, 0, ',', '.') }}</strong>
+                </div>
+                <div class="ticket-row">
+                    <span>Pembayaran:</span>
+                    <strong>{{ strtoupper($transaction->payment_method) }}</strong>
+                </div>
+                <div class="ticket-row">
+                    <span>Status:</span>
+                    <strong class="{{ $transaction->payment_status === 'paid' ? 'status-paid' : 'status-pending' }}">
+                        {{ $transaction->payment_status === 'paid' ? 'LUNAS' : 'PENDING' }}
+                    </strong>
+                </div>
+                @if($transaction->payment_reference)
+                <div class="ticket-row">
+                    <span>Ref:</span>
+                    <strong>{{ $transaction->payment_reference }}</strong>
+                </div>
+                @endif
+                
+                <!-- Important Notice -->
+                <div class="section-divider">
+                    <div style="font-weight: bold; margin-bottom: 6px; color: #d63384;">PENTING!</div>
+                </div>
+                <div style="font-size: 9px; line-height: 1.3;">
+                    • Harap datang 30 menit sebelum keberangkatan<br>
+                    • Tunjukkan tiket ini kepada petugas boarding<br>
+                    • Tiket tidak dapat di-refund<br>
+                    • Simpan tiket hingga perjalanan selesai
+                </div>
+                
+                @if($transaction->notes)
+                <div class="section-divider">
+                    <div style="font-weight: bold; margin-bottom: 6px;">CATATAN</div>
+                </div>
+                <div style="font-size: 9px;">
+                    {{ $transaction->notes }}
+                </div>
+                @endif
             </div>
-            
-            <div class="ticket-row">
-                <span>Tipe:</span>
-                <strong>{{ $ticket->passenger_type === 'adult' ? 'DEWASA' : 'ANAK' }}</strong>
-            </div>
-            
-            <div class="ticket-divider"></div>
-            
-            <!-- Trip Info -->
-            <div class="ticket-row">
-                <span>Tujuan:</span>
-                <strong>{{ $transaction->schedule->destination->name }}</strong>
-            </div>
-            
-            <div class="ticket-row">
-                <span>Tanggal:</span>
-                <strong>{{ $transaction->schedule->departure_date->format('d M Y') }}</strong>
-            </div>
-            
-            <div class="ticket-row">
-                <span>Jam:</span>
-                <strong>{{ $transaction->schedule->departure_time->format('H:i') }} WIB</strong>
-            </div>
-            
-            <div class="ticket-divider"></div>
-            
-            <!-- Price Info -->
-            <div class="ticket-row">
-                <span>Harga:</span>
-                <strong>Rp {{ number_format($ticket->price, 0, ',', '.') }}</strong>
-            </div>
-            
-            <div class="ticket-row">
-                <span>Pembayaran:</span>
-                <strong>{{ strtoupper($transaction->payment_method) }}</strong>
-            </div>
-            
-            <div class="ticket-row">
-                <span>Status:</span>
-                <strong class="{{ $transaction->payment_status === 'paid' ? 'status-paid' : 'status-pending' }}">
-                    {{ $transaction->payment_status === 'paid' ? 'LUNAS' : 'PENDING' }}
-                </strong>
-            </div>
-            
-            @if($transaction->payment_reference)
-            <div class="ticket-row">
-                <span>Ref:</span>
-                <strong>{{ $transaction->payment_reference }}</strong>
-            </div>
-            @endif
-            
-            <div class="ticket-divider"></div>
-            
-            <!-- QR Code -->
-            <div class="qr-code">
-                <div style="margin-bottom: 4px; font-size: 8px;">SCAN UNTUK VALIDASI</div>
-                {!! QrCode::size(80)->generate($ticket->qr_code) !!}
-            </div>
-            
-            <div class="ticket-divider"></div>
-            
-            <!-- Important Notice -->
-            <div class="ticket-row center">
-                <div class="large-text">PENTING!</div>
-            </div>
-            
-            <div style="font-size: 8px; text-align: center; margin: 4px 0;">
-                • Harap datang 30 menit sebelum keberangkatan<br>
-                • Tunjukkan tiket ini kepada petugas boarding<br>
-                • Tiket tidak dapat di-refund<br>
-                • Simpan tiket hingga perjalanan selesai
-            </div>
-            
-            @if($transaction->notes)
-            <div class="ticket-divider"></div>
-            <div style="font-size: 8px;">
-                <strong>Catatan:</strong><br>
-                {{ $transaction->notes }}
-            </div>
-            @endif
         </div>
         
         <!-- Footer -->

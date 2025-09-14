@@ -5,7 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    <title>Login - Speedboat Ticketing</title>
+    <title>Login - Speedboat Ticketing System</title>
+    
+    <!-- Meta Description -->
+    <meta name="description" content="Login ke Sistem Speedboat Ticketing - Akses dashboard untuk mengelola penjualan tiket, jadwal keberangkatan, dan data penumpang speedboat.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('image/icon.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('image/icon.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('image/icon.png') }}">
+    <link rel="shortcut icon" href="{{ asset('favicon.png') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    <meta name="theme-color" content="#3b82f6">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -369,13 +380,7 @@
                         </button>
                     </form>
 
-                    <!-- Sign Up Link -->
-                    <div class="text-center mt-8 pt-6 border-t border-gray-200 dark:border-gray-600">
-                        <p class="text-sm text-gray-800 dark:text-gray-300">
-                            Belum punya akun? 
-                            <a href="#" class="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors">Daftar di sini</a>
-                        </p>
-                    </div>
+                  
                 </div>
             </div>
         </div>

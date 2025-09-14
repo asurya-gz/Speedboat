@@ -14,7 +14,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::latest()->paginate(15);
+        $users = User::latest()->paginate(10);
         return view('users.index', compact('users'));
     }
 
@@ -34,7 +34,6 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:admin,kasir,boarding',
             'is_active' => 'boolean',
         ]);
@@ -42,13 +41,14 @@ class UserController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make('@Speedboat123'),
             'role' => $request->role,
             'is_active' => $request->has('is_active'),
+            'must_change_password' => true,
         ]);
 
         return redirect()->route('users.index')
-            ->with('success', 'User berhasil ditambahkan.');
+            ->with('success', 'User berhasil ditambahkan dengan password default @Speedboat123.');
     }
 
     /**
@@ -149,5 +149,49 @@ class UserController extends Controller
         $status = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
         return redirect()->route('users.index')
             ->with('success', "User berhasil {$status}.");
+    }
+
+    /**
+     * Export users to CSV.
+     */
+    public function export()
+    {
+        $users = User::all();
+        
+        $csvData = [];
+        $csvData[] = ['Nama', 'Email', 'Role', 'Status', 'Last Login', 'Dibuat Tanggal'];
+        
+        foreach ($users as $user) {
+            $csvData[] = [
+                $user->name,
+                $user->email,
+                $user->getRoleDisplayName(),
+                $user->is_active ? 'Aktif' : 'Nonaktif',
+                $user->last_login_at ? $user->last_login_at->format('Y-m-d H:i:s') : 'Belum pernah login',
+                $user->created_at->format('Y-m-d H:i:s')
+            ];
+        }
+        
+        $filename = 'users_' . date('Y-m-d_H-i-s') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+        
+        $callback = function() use ($csvData) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for UTF-8
+            fwrite($file, "\xEF\xBB\xBF");
+            
+            foreach ($csvData as $row) {
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
     }
 }
