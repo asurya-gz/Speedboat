@@ -79,12 +79,11 @@
                             </div>
                             <input type="text" 
                                    class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('adult_price') border-red-500 @enderror" 
-                                   id="adult_price" 
-                                   name="adult_price" 
+                                   id="adult_price_display" 
                                    value="{{ old('adult_price', $destination->adult_price) }}"
                                    placeholder="50.000"
-                                   inputmode="numeric"
-                                   required>
+                                   inputmode="numeric">
+                            <input type="hidden" id="adult_price" name="adult_price" value="{{ old('adult_price', $destination->adult_price) }}" required>
                         </div>
                         @error('adult_price')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -105,12 +104,11 @@
                             </div>
                             <input type="text" 
                                    class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('child_price') border-red-500 @enderror" 
-                                   id="child_price" 
-                                   name="child_price" 
+                                   id="child_price_display" 
                                    value="{{ old('child_price', $destination->child_price) }}"
                                    placeholder="30.000"
-                                   inputmode="numeric"
-                                   required>
+                                   inputmode="numeric">
+                            <input type="hidden" id="child_price" name="child_price" value="{{ old('child_price', $destination->child_price) }}" required>
                         </div>
                         @error('child_price')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -131,12 +129,11 @@
                             </div>
                             <input type="text" 
                                    class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('toddler_price') border-red-500 @enderror" 
-                                   id="toddler_price" 
-                                   name="toddler_price" 
+                                   id="toddler_price_display" 
                                    value="{{ old('toddler_price', $destination->toddler_price ?? '') }}"
                                    placeholder="15.000"
-                                   inputmode="numeric"
-                                   required>
+                                   inputmode="numeric">
+                            <input type="hidden" id="toddler_price" name="toddler_price" value="{{ old('toddler_price', $destination->toddler_price ?? '') }}" required>
                         </div>
                         @error('toddler_price')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -238,50 +235,57 @@
     }
 
     // Apply to adult price input
-    const adultPriceInput = document.getElementById('adult_price');
-    adultPriceInput.addEventListener('keydown', handlePriceInput);
-    adultPriceInput.addEventListener('input', function() {
+    const adultPriceDisplay = document.getElementById('adult_price_display');
+    const adultPriceHidden = document.getElementById('adult_price');
+    
+    adultPriceDisplay.addEventListener('keydown', handlePriceInput);
+    adultPriceDisplay.addEventListener('input', function() {
+        // Update hidden field with unformatted value
+        const rawValue = this.value.replace(/\D/g, '');
+        adultPriceHidden.value = rawValue;
+        // Format display
         formatPrice(this);
     });
 
     // Apply to child price input
-    const childPriceInput = document.getElementById('child_price');
-    childPriceInput.addEventListener('keydown', handlePriceInput);
-    childPriceInput.addEventListener('input', function() {
+    const childPriceDisplay = document.getElementById('child_price_display');
+    const childPriceHidden = document.getElementById('child_price');
+    
+    childPriceDisplay.addEventListener('keydown', handlePriceInput);
+    childPriceDisplay.addEventListener('input', function() {
+        // Update hidden field with unformatted value
+        const rawValue = this.value.replace(/\D/g, '');
+        childPriceHidden.value = rawValue;
+        // Format display
         formatPrice(this);
     });
 
     // Apply to toddler price input
-    const toddlerPriceInput = document.getElementById('toddler_price');
-    toddlerPriceInput.addEventListener('keydown', handlePriceInput);
-    toddlerPriceInput.addEventListener('input', function() {
+    const toddlerPriceDisplay = document.getElementById('toddler_price_display');
+    const toddlerPriceHidden = document.getElementById('toddler_price');
+    
+    toddlerPriceDisplay.addEventListener('keydown', handlePriceInput);
+    toddlerPriceDisplay.addEventListener('input', function() {
+        // Update hidden field with unformatted value
+        const rawValue = this.value.replace(/\D/g, '');
+        toddlerPriceHidden.value = rawValue;
+        // Format display
         formatPrice(this);
     });
 
     // Format existing values on page load
     document.addEventListener('DOMContentLoaded', function() {
-        if (adultPriceInput.value) {
-            formatPrice(adultPriceInput);
+        if (adultPriceDisplay.value) {
+            adultPriceHidden.value = adultPriceDisplay.value.replace(/\D/g, '');
+            formatPrice(adultPriceDisplay);
         }
-        if (childPriceInput.value) {
-            formatPrice(childPriceInput);
+        if (childPriceDisplay.value) {
+            childPriceHidden.value = childPriceDisplay.value.replace(/\D/g, '');
+            formatPrice(childPriceDisplay);
         }
-        if (toddlerPriceInput.value) {
-            formatPrice(toddlerPriceInput);
-        }
-    });
-
-    // Before form submission, convert formatted prices back to plain numbers
-    document.querySelector('form').addEventListener('submit', function(e) {
-        // Convert formatted values back to plain numbers
-        if (adultPriceInput.value) {
-            adultPriceInput.value = adultPriceInput.value.replace(/\./g, '');
-        }
-        if (childPriceInput.value) {
-            childPriceInput.value = childPriceInput.value.replace(/\./g, '');
-        }
-        if (toddlerPriceInput.value) {
-            toddlerPriceInput.value = toddlerPriceInput.value.replace(/\./g, '');
+        if (toddlerPriceDisplay.value) {
+            toddlerPriceHidden.value = toddlerPriceDisplay.value.replace(/\D/g, '');
+            formatPrice(toddlerPriceDisplay);
         }
     });
 </script>
