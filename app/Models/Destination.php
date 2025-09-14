@@ -14,6 +14,7 @@ class Destination extends Model
         'code',
         'adult_price',
         'child_price',
+        'toddler_price',
         'description',
         'is_active'
     ];
@@ -21,6 +22,7 @@ class Destination extends Model
     protected $casts = [
         'adult_price' => 'decimal:2',
         'child_price' => 'decimal:2',
+        'toddler_price' => 'decimal:2',
         'is_active' => 'boolean'
     ];
 

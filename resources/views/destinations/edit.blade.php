@@ -133,7 +133,7 @@
                                    value="{{ old('toddler_price', $destination->toddler_price ?? '') }}"
                                    placeholder="15.000"
                                    inputmode="numeric">
-                            <input type="hidden" id="toddler_price" name="toddler_price" value="{{ old('toddler_price', $destination->toddler_price ?? '') }}" required>
+                            <input type="hidden" id="toddler_price" name="toddler_price" value="{{ old('toddler_price', $destination->toddler_price ?? '') }}">
                         </div>
                         @error('toddler_price')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -276,15 +276,24 @@
     // Format existing values on page load
     document.addEventListener('DOMContentLoaded', function() {
         if (adultPriceDisplay.value) {
-            adultPriceHidden.value = adultPriceDisplay.value.replace(/\D/g, '');
+            // Convert decimal to integer (remove .00 if present)
+            const rawValue = Math.floor(parseFloat(adultPriceDisplay.value) || 0).toString();
+            adultPriceHidden.value = rawValue;
+            adultPriceDisplay.value = rawValue;
             formatPrice(adultPriceDisplay);
         }
         if (childPriceDisplay.value) {
-            childPriceHidden.value = childPriceDisplay.value.replace(/\D/g, '');
+            // Convert decimal to integer (remove .00 if present)
+            const rawValue = Math.floor(parseFloat(childPriceDisplay.value) || 0).toString();
+            childPriceHidden.value = rawValue;
+            childPriceDisplay.value = rawValue;
             formatPrice(childPriceDisplay);
         }
         if (toddlerPriceDisplay.value) {
-            toddlerPriceHidden.value = toddlerPriceDisplay.value.replace(/\D/g, '');
+            // Convert decimal to integer (remove .00 if present)
+            const rawValue = Math.floor(parseFloat(toddlerPriceDisplay.value) || 0).toString();
+            toddlerPriceHidden.value = rawValue;
+            toddlerPriceDisplay.value = rawValue;
             formatPrice(toddlerPriceDisplay);
         }
     });

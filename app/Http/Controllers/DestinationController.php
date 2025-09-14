@@ -26,6 +26,7 @@ class DestinationController extends Controller
             'code' => 'required|string|max:10|unique:destinations',
             'adult_price' => 'required|numeric|min:0',
             'child_price' => 'required|numeric|min:0',
+            'toddler_price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string'
         ]);
 
@@ -33,7 +34,7 @@ class DestinationController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['name', 'code', 'adult_price', 'child_price', 'description']);
+        $data = $request->only(['name', 'code', 'adult_price', 'child_price', 'toddler_price', 'description']);
         $data['is_active'] = $request->has('is_active');
 
         Destination::create($data);
@@ -57,6 +58,7 @@ class DestinationController extends Controller
             'code' => 'required|string|max:10|unique:destinations,code,' . $destination->id,
             'adult_price' => 'required|numeric|min:0',
             'child_price' => 'required|numeric|min:0',
+            'toddler_price' => 'nullable|numeric|min:0',
             'description' => 'nullable|string'
         ]);
 
@@ -64,7 +66,7 @@ class DestinationController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['name', 'code', 'adult_price', 'child_price', 'description']);
+        $data = $request->only(['name', 'code', 'adult_price', 'child_price', 'toddler_price', 'description']);
         $data['is_active'] = $request->has('is_active');
 
         $destination->update($data);
@@ -94,7 +96,7 @@ class DestinationController extends Controller
         $destinations = Destination::all();
         
         $csvData = [];
-        $csvData[] = ['Kode', 'Nama Destinasi', 'Harga Dewasa', 'Harga Anak', 'Status', 'Deskripsi', 'Dibuat Tanggal'];
+        $csvData[] = ['Kode', 'Nama Destinasi', 'Harga Dewasa', 'Harga Anak', 'Harga Balita', 'Status', 'Deskripsi', 'Dibuat Tanggal'];
         
         foreach ($destinations as $destination) {
             $csvData[] = [
@@ -102,6 +104,7 @@ class DestinationController extends Controller
                 $destination->name,
                 $destination->adult_price,
                 $destination->child_price,
+                $destination->toddler_price ?? 0,
                 $destination->is_active ? 'Aktif' : 'Nonaktif',
                 $destination->description ?? '',
                 $destination->created_at->format('Y-m-d H:i:s')
