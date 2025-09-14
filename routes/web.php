@@ -33,6 +33,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
+    Route::get('/analytics', [AuthController::class, 'analytics'])->name('analytics');
     
     // Password change routes for first-time login
     Route::get('/password/change', [AuthController::class, 'showChangePassword'])->name('password.change.form');

@@ -75,15 +75,48 @@
                 
                 <!-- Navigation -->
                 <nav class="flex-1 px-4 py-6 space-y-2">
-                    <!-- Dashboard - accessible by all -->
-                    <a href="{{ route('dashboard') }}" 
-                       class="sidebar-nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v3H8V5z"></path>
-                        </svg>
-                        Dashboard
-                    </a>
+                    <!-- Dashboard Analytic - accessible by all -->
+                    <div class="relative" x-data="{ open: {{ request()->routeIs('dashboard') || request()->routeIs('analytics') ? 'true' : 'false' }} }">
+                        <button @click="open = !open" 
+                                class="sidebar-nav-item w-full flex items-center justify-between {{ request()->routeIs('dashboard') || request()->routeIs('analytics') ? 'active' : '' }}">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                                Dashboard Analytic
+                            </div>
+                            <svg class="w-4 h-4 transition-transform duration-200" 
+                                 :class="open ? 'rotate-180' : ''" 
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        
+                        <div x-show="open" 
+                             x-transition:enter="transition ease-out duration-200"
+                             x-transition:enter-start="opacity-0 transform -translate-y-2"
+                             x-transition:enter-end="opacity-100 transform translate-y-0"
+                             x-transition:leave="transition ease-in duration-150"
+                             x-transition:leave-start="opacity-100 transform translate-y-0"
+                             x-transition:leave-end="opacity-0 transform -translate-y-2"
+                             class="ml-8 mt-2 space-y-1">
+                            <a href="{{ route('dashboard') }}" 
+                               class="sidebar-submenu-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h2a2 2 0 012 2v3H8V5z"></path>
+                                </svg>
+                                Dashboard
+                            </a>
+                            <a href="{{ route('analytics') }}" 
+                               class="sidebar-submenu-item {{ request()->routeIs('analytics') ? 'active' : '' }}">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Analytics
+                            </a>
+                        </div>
+                    </div>
 
                     @auth
                         @if(Auth::user()->isAdmin() || Auth::user()->isKasir())

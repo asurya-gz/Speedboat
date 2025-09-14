@@ -81,9 +81,8 @@
                                    id="adult_price_display" 
                                    value="{{ old('adult_price') }}"
                                    placeholder="50.000"
-                                   inputmode="numeric"
-                                   required>
-                            <input type="hidden" id="adult_price" name="adult_price" value="{{ old('adult_price') }}"
+                                   inputmode="numeric">
+                            <input type="hidden" id="adult_price" name="adult_price" value="{{ old('adult_price') }}" required>
                         </div>
                         @error('adult_price')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -107,9 +106,8 @@
                                    id="child_price_display" 
                                    value="{{ old('child_price') }}"
                                    placeholder="30.000"
-                                   inputmode="numeric"
-                                   required>
-                            <input type="hidden" id="child_price" name="child_price" value="{{ old('child_price') }}"
+                                   inputmode="numeric">
+                            <input type="hidden" id="child_price" name="child_price" value="{{ old('child_price') }}" required>
                         </div>
                         @error('child_price')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -133,9 +131,8 @@
                                    id="toddler_price_display" 
                                    value="{{ old('toddler_price') }}"
                                    placeholder="15.000"
-                                   inputmode="numeric"
-                                   required>
-                            <input type="hidden" id="toddler_price" name="toddler_price" value="{{ old('toddler_price') }}"
+                                   inputmode="numeric">
+                            <input type="hidden" id="toddler_price" name="toddler_price" value="{{ old('toddler_price') }}" required>
                         </div>
                         @error('toddler_price')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -236,54 +233,58 @@
         }
     }
 
-    // Get display and hidden inputs
+    // Apply to adult price input
     const adultPriceDisplay = document.getElementById('adult_price_display');
     const adultPriceHidden = document.getElementById('adult_price');
-    const childPriceDisplay = document.getElementById('child_price_display');
-    const childPriceHidden = document.getElementById('child_price');
-    const toddlerPriceDisplay = document.getElementById('toddler_price_display');
-    const toddlerPriceHidden = document.getElementById('toddler_price');
-
-    // Function to update hidden input with unformatted value
-    function updateHiddenInput(displayInput, hiddenInput) {
-        const unformattedValue = displayInput.value.replace(/\D/g, '');
-        hiddenInput.value = unformattedValue;
-    }
-
-    // Apply to adult price input
+    
     adultPriceDisplay.addEventListener('keydown', handlePriceInput);
     adultPriceDisplay.addEventListener('input', function() {
+        // Update hidden field with unformatted value
+        const rawValue = this.value.replace(/\D/g, '');
+        adultPriceHidden.value = rawValue;
+        // Format display
         formatPrice(this);
-        updateHiddenInput(this, adultPriceHidden);
     });
 
     // Apply to child price input
+    const childPriceDisplay = document.getElementById('child_price_display');
+    const childPriceHidden = document.getElementById('child_price');
+    
     childPriceDisplay.addEventListener('keydown', handlePriceInput);
     childPriceDisplay.addEventListener('input', function() {
+        // Update hidden field with unformatted value
+        const rawValue = this.value.replace(/\D/g, '');
+        childPriceHidden.value = rawValue;
+        // Format display
         formatPrice(this);
-        updateHiddenInput(this, childPriceHidden);
     });
 
     // Apply to toddler price input
+    const toddlerPriceDisplay = document.getElementById('toddler_price_display');
+    const toddlerPriceHidden = document.getElementById('toddler_price');
+    
     toddlerPriceDisplay.addEventListener('keydown', handlePriceInput);
     toddlerPriceDisplay.addEventListener('input', function() {
+        // Update hidden field with unformatted value
+        const rawValue = this.value.replace(/\D/g, '');
+        toddlerPriceHidden.value = rawValue;
+        // Format display
         formatPrice(this);
-        updateHiddenInput(this, toddlerPriceHidden);
     });
 
     // Format existing values on page load
     document.addEventListener('DOMContentLoaded', function() {
         if (adultPriceDisplay.value) {
+            adultPriceHidden.value = adultPriceDisplay.value.replace(/\D/g, '');
             formatPrice(adultPriceDisplay);
-            updateHiddenInput(adultPriceDisplay, adultPriceHidden);
         }
         if (childPriceDisplay.value) {
+            childPriceHidden.value = childPriceDisplay.value.replace(/\D/g, '');
             formatPrice(childPriceDisplay);
-            updateHiddenInput(childPriceDisplay, childPriceHidden);
         }
         if (toddlerPriceDisplay.value) {
+            toddlerPriceHidden.value = toddlerPriceDisplay.value.replace(/\D/g, '');
             formatPrice(toddlerPriceDisplay);
-            updateHiddenInput(toddlerPriceDisplay, toddlerPriceHidden);
         }
     });
 </script>

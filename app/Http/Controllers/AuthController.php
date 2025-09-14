@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Models\Destination;
+use App\Models\Schedule;
+use App\Models\Transaction;
 
 class AuthController extends Controller
 {
@@ -165,5 +169,114 @@ class AuthController extends Controller
         
         // All roles now use the admin dashboard view with admin styling
         return view('dashboard.admin', compact('user'));
+    }
+
+    public function analytics()
+    {
+        $user = Auth::user();
+        
+        // Check if user must change password
+        if ($user->must_change_password) {
+            return redirect()->route('password.change.form')->with('info', 'Anda harus mengganti password sebelum melanjutkan.');
+        }
+        
+        // Get analytics data
+        $analytics = $this->getAnalyticsData();
+        
+        return view('dashboard.analytics', compact('user', 'analytics'));
+    }
+
+    private function getAnalyticsData()
+    {
+        // Total Revenue
+        $totalRevenue = Transaction::where('payment_status', 'paid')->sum('total_amount');
+        
+        // Total Tickets Sold
+        $totalTicketsSold = Transaction::where('payment_status', 'paid')
+            ->sum(DB::raw('adult_count + child_count + COALESCE(toddler_count, 0)'));
+        
+        // Total Destinations
+        $totalDestinations = Destination::where('is_active', true)->count();
+        
+        // Active Schedules (next 15 days)
+        $activeSchedules = Schedule::where('departure_time', '>=', now())
+            ->where('departure_time', '<=', now()->addDays(15))
+            ->where('is_active', true)
+            ->count();
+        
+        // Monthly Revenue (last 6 months)
+        $monthlyRevenue = Transaction::selectRaw('MONTH(created_at) as month, YEAR(created_at) as year, SUM(total_amount) as revenue')
+            ->where('payment_status', 'paid')
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->groupBy('year', 'month')
+            ->orderBy('year', 'asc')
+            ->orderBy('month', 'asc')
+            ->get();
+        
+        // Popular Destinations (top 5 by transaction count)
+        $popularDestinations = Transaction::join('schedules', 'transactions.schedule_id', '=', 'schedules.id')
+            ->join('destinations', 'schedules.destination_id', '=', 'destinations.id')
+            ->selectRaw('destinations.name, destinations.code, COUNT(*) as transaction_count')
+            ->where('transactions.payment_status', 'paid')
+            ->groupBy('destinations.id', 'destinations.name', 'destinations.code')
+            ->orderBy('transaction_count', 'desc')
+            ->limit(5)
+            ->get();
+        
+        // Daily Sales Trend (last 7 days)
+        $dailySales = Transaction::selectRaw('DATE(created_at) as date, SUM(adult_count + child_count + COALESCE(toddler_count, 0)) as tickets_sold')
+            ->where('payment_status', 'paid')
+            ->where('created_at', '>=', now()->subDays(7))
+            ->groupBy('date')
+            ->orderBy('date', 'asc')
+            ->get();
+        
+        // Recent Activities (last 10 transactions)
+        $recentActivities = Transaction::with(['schedule.destination'])
+            ->where('payment_status', 'paid')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+        
+        // Calculate percentage changes (comparing with previous month)
+        $currentMonth = now()->format('Y-m');
+        $previousMonth = now()->subMonth()->format('Y-m');
+        
+        $currentMonthRevenue = Transaction::where('payment_status', 'paid')
+            ->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$currentMonth])
+            ->sum('total_amount');
+            
+        $previousMonthRevenue = Transaction::where('payment_status', 'paid')
+            ->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$previousMonth])
+            ->sum('total_amount');
+        
+        $revenueChange = $previousMonthRevenue > 0 
+            ? (($currentMonthRevenue - $previousMonthRevenue) / $previousMonthRevenue) * 100 
+            : 0;
+        
+        $currentMonthTickets = Transaction::where('payment_status', 'paid')
+            ->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$currentMonth])
+            ->sum(DB::raw('adult_count + child_count + COALESCE(toddler_count, 0)'));
+            
+        $previousMonthTickets = Transaction::where('payment_status', 'paid')
+            ->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$previousMonth])
+            ->sum(DB::raw('adult_count + child_count + COALESCE(toddler_count, 0)'));
+        
+        $ticketsChange = $previousMonthTickets > 0 
+            ? (($currentMonthTickets - $previousMonthTickets) / $previousMonthTickets) * 100 
+            : 0;
+        
+        return [
+            'totalRevenue' => $totalRevenue,
+            'totalTicketsSold' => $totalTicketsSold,
+            'totalDestinations' => $totalDestinations,
+            'activeSchedules' => $activeSchedules,
+            'monthlyRevenue' => $monthlyRevenue,
+            'popularDestinations' => $popularDestinations,
+            'dailySales' => $dailySales,
+            'recentActivities' => $recentActivities,
+            'revenueChange' => $revenueChange,
+            'ticketsChange' => $ticketsChange,
+        ];
     }
 }
