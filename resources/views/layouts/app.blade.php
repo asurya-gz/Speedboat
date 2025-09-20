@@ -321,15 +321,14 @@
                                 </button>
                                 
                                 <!-- Logout Form -->
-                                <form method="POST" action="{{ route('logout') }}"  class="border-t border-gray-100 dark:border-gray-700">
-                                    @csrf
-                                    <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                <div class="border-t border-gray-100 dark:border-gray-700">
+                                    <button onclick="performLogout()" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
                                         <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                                         </svg>
                                         Logout
                                     </button>
-                                </form>
+                                </div>
                             </div>
                         </div>
                         @endauth
@@ -437,6 +436,26 @@
         document.addEventListener('DOMContentLoaded', function() {
             updateThemeIcons();
         });
+        
+        // Perform logout with fresh CSRF token
+        function performLogout() {
+            // Create a form dynamically with fresh CSRF token
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("logout") }}';
+            
+            // Add CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            // Add to body and submit
+            document.body.appendChild(form);
+            form.submit();
+        }
         // Change Password Modal Functions
         function openChangePasswordModal() {
             const modal = document.getElementById('changePasswordModal');
