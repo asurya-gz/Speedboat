@@ -11,18 +11,15 @@ class Schedule extends Model
 
     protected $fillable = [
         'destination_id',
-        'departure_date',
+        'name',
         'departure_time',
         'capacity',
-        'available_seats',
         'is_active'
     ];
 
     protected $casts = [
-        'departure_date' => 'date',
         'departure_time' => 'datetime:H:i',
         'capacity' => 'integer',
-        'available_seats' => 'integer',
         'is_active' => 'boolean'
     ];
 

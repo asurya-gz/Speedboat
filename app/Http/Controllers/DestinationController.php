@@ -22,11 +22,11 @@ class DestinationController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
             'code' => 'required|string|max:10|unique:destinations',
+            'departure_location' => 'required|string|max:255',
+            'destination_location' => 'required|string|max:255',
             'adult_price' => 'required|numeric|min:0',
-            'child_price' => 'required|numeric|min:0',
-            'toddler_price' => 'nullable|numeric|min:0',
+            'toddler_price' => 'required|numeric|min:0',
             'description' => 'nullable|string'
         ]);
 
@@ -34,7 +34,7 @@ class DestinationController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['name', 'code', 'adult_price', 'child_price', 'toddler_price', 'description']);
+        $data = $request->only(['code', 'departure_location', 'destination_location', 'adult_price', 'toddler_price', 'description']);
         $data['is_active'] = $request->has('is_active');
 
         Destination::create($data);
@@ -54,11 +54,11 @@ class DestinationController extends Controller
     public function update(Request $request, Destination $destination)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
             'code' => 'required|string|max:10|unique:destinations,code,' . $destination->id,
+            'departure_location' => 'required|string|max:255',
+            'destination_location' => 'required|string|max:255',
             'adult_price' => 'required|numeric|min:0',
-            'child_price' => 'required|numeric|min:0',
-            'toddler_price' => 'nullable|numeric|min:0',
+            'toddler_price' => 'required|numeric|min:0',
             'description' => 'nullable|string'
         ]);
 
@@ -66,7 +66,7 @@ class DestinationController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['name', 'code', 'adult_price', 'child_price', 'toddler_price', 'description']);
+        $data = $request->only(['code', 'departure_location', 'destination_location', 'adult_price', 'toddler_price', 'description']);
         $data['is_active'] = $request->has('is_active');
 
         $destination->update($data);
@@ -132,5 +132,37 @@ class DestinationController extends Controller
         };
         
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Generate a unique destination code.
+     */
+    public function generateCode()
+    {
+        $attempts = 0;
+        $maxAttempts = 100;
+        
+        do {
+            // Generate a 3-6 character code using letters and numbers
+            $length = rand(3, 6);
+            $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            $code = '';
+            
+            for ($i = 0; $i < $length; $i++) {
+                $code .= $characters[rand(0, strlen($characters) - 1)];
+            }
+            
+            $attempts++;
+            
+            // Check if code already exists
+            $exists = Destination::where('code', $code)->exists();
+            
+        } while ($exists && $attempts < $maxAttempts);
+        
+        if ($attempts >= $maxAttempts) {
+            return response()->json(['error' => 'Unable to generate unique code'], 500);
+        }
+        
+        return response()->json(['code' => $code]);
     }
 }

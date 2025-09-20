@@ -15,6 +15,7 @@ class Transaction extends Model
         'passenger_name',
         'adult_count',
         'child_count',
+        'toddler_count',
         'total_amount',
         'payment_method',
         'payment_status',
@@ -28,6 +29,7 @@ class Transaction extends Model
     protected $casts = [
         'adult_count' => 'integer',
         'child_count' => 'integer',
+        'toddler_count' => 'integer',
         'total_amount' => 'decimal:2',
         'is_synced' => 'boolean',
         'paid_at' => 'datetime'

@@ -94,21 +94,102 @@
 
                 <!-- Kapasitas -->
                 <div>
-                    <label for="capacity" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
                         </svg>
-                        Kapasitas Penumpang
+                        Ubah Kapasitas Penumpang
                     </label>
-                    <input type="number" 
-                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('capacity') border-red-500 @enderror" 
-                           id="capacity" 
-                           name="capacity" 
-                           value="{{ old('capacity', $schedule->capacity) }}"
-                           placeholder="50"
-                           min="1"
-                           required>
-                    @error('capacity')
+                    
+                    <!-- Current capacity info -->
+                    <div class="mb-4 p-3 bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-600 rounded-lg">
+                        <div class="text-sm text-blue-800 dark:text-blue-200">
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <span class="font-medium">Kapasitas saat ini:</span>
+                                    <div class="text-lg font-bold text-blue-800 dark:text-white">{{ $schedule->capacity }}</div>
+                                </div>
+                                <div>
+                                    <span class="font-medium">Tersedia:</span>
+                                    <div class="text-lg font-bold text-green-600 dark:text-green-400">{{ $schedule->available_seats }}</div>
+                                </div>
+                                <div>
+                                    <span class="font-medium">Terjual:</span>
+                                    <div class="text-lg font-bold text-red-600 dark:text-red-400">{{ $schedule->capacity - $schedule->available_seats }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Capacity adjustment options -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Pilih Aksi:</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="capacity-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <input type="radio" name="capacity_action" value="add" class="mr-3" onchange="toggleCapacityInput()">
+                                    <div>
+                                        <div class="font-medium text-gray-700 dark:text-gray-300">Tambah Kapasitas</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Menambah kursi baru</div>
+                                    </div>
+                                </label>
+                                
+                                <label class="capacity-option flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <input type="radio" name="capacity_action" value="reduce" class="mr-3" onchange="toggleCapacityInput()">
+                                    <div>
+                                        <div class="font-medium text-gray-700 dark:text-gray-300">Kurangi Kapasitas</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Mengurangi kursi tersedia</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="capacityInputSection" class="hidden">
+                            <label for="capacity_change" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                Jumlah kursi: <span id="actionText"></span>
+                            </label>
+                            <input type="number" 
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400" 
+                                   id="capacity_change" 
+                                   name="capacity_change" 
+                                   placeholder="Masukkan jumlah kursi"
+                                   min="1"
+                                   onchange="previewCapacityChange()">
+                            
+                            <!-- Preview hasil perubahan -->
+                            <div id="capacityPreview" class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/50 rounded-lg hidden">
+                                <div class="text-sm text-yellow-800 dark:text-yellow-300">
+                                    <div class="font-medium mb-2">Preview setelah perubahan:</div>
+                                    <div class="grid grid-cols-3 gap-4">
+                                        <div>
+                                            <span>Kapasitas total:</span>
+                                            <div class="font-bold" id="previewTotal">-</div>
+                                        </div>
+                                        <div>
+                                            <span>Tersedia:</span>
+                                            <div class="font-bold text-green-600 dark:text-green-400" id="previewAvailable">-</div>
+                                        </div>
+                                        <div>
+                                            <span>Terjual:</span>
+                                            <div class="font-bold text-red-600 dark:text-red-400" id="previewSold">{{ $schedule->capacity - $schedule->available_seats }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="capacityWarning" class="mt-3 p-3 bg-red-50 dark:bg-red-900/50 rounded-lg hidden">
+                                <div class="text-sm text-red-800 dark:text-red-300">
+                                    <div class="font-medium">⚠️ Peringatan!</div>
+                                    <div id="warningText"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    @error('capacity_action')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    @error('capacity_change')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
                 </div>
@@ -193,7 +274,7 @@
                         </svg>
                         Kembali
                     </a>
-                    <button type="submit" class="btn btn-warning">
+                    <button type="submit" id="submitBtn" class="btn btn-warning" disabled>
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
                         </svg>
@@ -204,6 +285,68 @@
         </div>
     </div>
 </div>
+
+@push('styles')
+<style>
+/* Capacity option styling */
+.capacity-option {
+    transition: all 0.2s ease-in-out;
+    border: 2px solid #e5e7eb;
+}
+
+html.dark .capacity-option {
+    border: 2px solid #4b5563;
+}
+
+.capacity-option:hover {
+    border-color: #bfdbfe !important;
+    background-color: #f8fafc !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+html.dark .capacity-option:hover {
+    border-color: #3b82f6 !important;
+    background-color: #1f2937 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.capacity-option.selected {
+    border-color: #3b82f6 !important;
+    background-color: #eff6ff !important;
+    box-shadow: 0 0 0 1px #3b82f6, 0 4px 6px rgba(59, 130, 246, 0.1);
+}
+
+html.dark .capacity-option.selected {
+    background-color: #1e3a8a !important;
+    box-shadow: 0 0 0 1px #3b82f6, 0 4px 6px rgba(59, 130, 246, 0.3);
+}
+
+.capacity-option {
+    position: relative;
+}
+
+.capacity-option.selected::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    background-color: #3b82f6;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* Radio buttons styling */
+input[type="radio"] {
+    accent-color: #3b82f6;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -245,6 +388,7 @@
             dropdown.classList.add('hidden');
             hiddenInput.value = '';
             selectedDestination = null;
+            validateForm();
             return;
         }
 
@@ -255,6 +399,7 @@
         );
 
         renderDropdown(filteredDestinations);
+        validateForm();
     });
 
     searchInput.addEventListener('focus', function() {
@@ -306,6 +451,7 @@
         dropdown.classList.add('hidden');
         
         updatePricePreview({ adult_price: adultPrice, child_price: childPrice });
+        validateForm();
     }
 
     function updatePricePreview(destination) {
@@ -316,6 +462,171 @@
                 new Intl.NumberFormat('id-ID').format(destination.child_price);
         }
     }
+
+    // Constants for capacity calculation
+    const currentCapacity = {{ $schedule->capacity }};
+    const soldTickets = {{ $schedule->capacity - $schedule->available_seats }};
+    const availableSeats = {{ $schedule->available_seats }};
+    
+    // Toggle capacity input section
+    function toggleCapacityInput() {
+        const capacityAction = document.querySelector('input[name="capacity_action"]:checked');
+        const inputSection = document.getElementById('capacityInputSection');
+        const actionText = document.getElementById('actionText');
+        const capacityInput = document.getElementById('capacity_change');
+        
+        if (capacityAction) {
+            inputSection.classList.remove('hidden');
+            capacityInput.value = '';
+            document.getElementById('capacityPreview').classList.add('hidden');
+            document.getElementById('capacityWarning').classList.add('hidden');
+            
+            if (capacityAction.value === 'add') {
+                actionText.textContent = 'yang akan ditambahkan';
+                capacityInput.setAttribute('max', '500'); // Reasonable max limit
+            } else {
+                actionText.textContent = 'yang akan dikurangi';
+                capacityInput.setAttribute('max', availableSeats.toString());
+            }
+        } else {
+            inputSection.classList.add('hidden');
+        }
+        
+        validateForm();
+    }
+    
+    // Preview capacity changes
+    function previewCapacityChange() {
+        const capacityAction = document.querySelector('input[name="capacity_action"]:checked');
+        const changeAmount = parseInt(document.getElementById('capacity_change').value) || 0;
+        const preview = document.getElementById('capacityPreview');
+        const warning = document.getElementById('capacityWarning');
+        const warningText = document.getElementById('warningText');
+        
+        if (!capacityAction || changeAmount <= 0) {
+            preview.classList.add('hidden');
+            warning.classList.add('hidden');
+            validateForm();
+            return;
+        }
+        
+        let newCapacity, newAvailable;
+        let showWarning = false;
+        let warningMessage = '';
+        
+        if (capacityAction.value === 'add') {
+            newCapacity = currentCapacity + changeAmount;
+            newAvailable = availableSeats + changeAmount;
+        } else {
+            newCapacity = currentCapacity - changeAmount;
+            newAvailable = availableSeats - changeAmount;
+            
+            // Check if reduction would cause issues
+            if (changeAmount > availableSeats) {
+                showWarning = true;
+                warningMessage = `Tidak dapat mengurangi ${changeAmount} kursi karena hanya ${availableSeats} kursi yang tersedia. Maksimal pengurangan adalah ${availableSeats} kursi.`;
+            } else if (newCapacity < soldTickets) {
+                showWarning = true;
+                warningMessage = `Pengurangan ini akan membuat kapasitas (${newCapacity}) lebih kecil dari tiket yang sudah terjual (${soldTickets}).`;
+            }
+        }
+        
+        // Show preview
+        document.getElementById('previewTotal').textContent = newCapacity;
+        document.getElementById('previewAvailable').textContent = Math.max(0, newAvailable);
+        preview.classList.remove('hidden');
+        
+        // Show/hide warning
+        if (showWarning) {
+            warningText.textContent = warningMessage;
+            warning.classList.remove('hidden');
+        } else {
+            warning.classList.add('hidden');
+        }
+        
+        validateForm();
+    }
+
+    // Form validation function
+    function validateForm() {
+        const destinationId = document.getElementById('destination_id').value;
+        const departureDate = document.getElementById('departure_date').value;
+        const departureTime = document.getElementById('departure_time').value;
+        const capacityAction = document.querySelector('input[name="capacity_action"]:checked');
+        const capacityChange = document.getElementById('capacity_change').value;
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Check if all required fields are filled
+        let isValid = destinationId !== '' && 
+                     departureDate !== '' && 
+                     departureTime !== '';
+        
+        // Check capacity fields if capacity action is selected
+        if (capacityAction) {
+            isValid = isValid && capacityChange !== '' && parseInt(capacityChange) > 0;
+            
+            // Additional validation for reduce action
+            if (capacityAction.value === 'reduce') {
+                const changeAmount = parseInt(capacityChange) || 0;
+                isValid = isValid && changeAmount <= availableSeats && changeAmount > 0;
+            }
+        } else {
+            // If no capacity action is selected, form is still valid for other updates
+            isValid = isValid;
+        }
+        
+        if (isValid) {
+            // Enable button and make it orange (warning color)
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+            submitBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+        } else {
+            // Disable button and make it gray
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+            submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+        }
+    }
+
+    // Add event listeners for form validation
+    document.getElementById('departure_date').addEventListener('input', validateForm);
+    document.getElementById('departure_time').addEventListener('input', validateForm);
+    document.getElementById('capacity_change').addEventListener('input', function() {
+        previewCapacityChange();
+        validateForm();
+    });
+    
+    // Add event listeners for capacity action radio buttons
+    document.querySelectorAll('input[name="capacity_action"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            toggleCapacityInput();
+            updateCapacityOptionSelection();
+        });
+    });
+    
+    // Update visual selection for capacity options
+    function updateCapacityOptionSelection() {
+        const allOptions = document.querySelectorAll('.capacity-option');
+        const selectedRadio = document.querySelector('input[name="capacity_action"]:checked');
+        
+        // Remove selected class from all options
+        allOptions.forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        // Add selected class to the chosen option
+        if (selectedRadio) {
+            const selectedOption = selectedRadio.closest('.capacity-option');
+            if (selectedOption) {
+                selectedOption.classList.add('selected');
+            }
+        }
+    }
+    
+    // Initial form validation on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        validateForm();
+    });
 
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {

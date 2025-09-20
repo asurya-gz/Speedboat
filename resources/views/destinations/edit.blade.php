@@ -19,52 +19,83 @@
                 @csrf
                 @method('PUT')
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Nama Destinasi -->
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                            Nama Destinasi
-                        </label>
+                <!-- Kode Destinasi -->
+                <div>
+                    <label for="code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                        </svg>
+                        Kode Destinasi
+                    </label>
+                    <div class="flex space-x-2">
                         <input type="text" 
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('name') border-red-500 @enderror" 
-                               id="name" 
-                               name="name" 
-                               value="{{ old('name', $destination->name) }}"
-                               placeholder="Contoh: Pulau Tidung"
-                               required>
-                        @error('name')
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    
-                    <!-- Kode Destinasi -->
-                    <div>
-                        <label for="code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-                            </svg>
-                            Kode Destinasi
-                        </label>
-                        <input type="text" 
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 uppercase @error('code') border-red-500 @enderror" 
+                               class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 uppercase @error('code') border-red-500 @enderror" 
                                id="code" 
                                name="code" 
                                value="{{ old('code', $destination->code) }}"
                                placeholder="Contoh: PTD"
                                maxlength="10"
                                required>
-                        @error('code')
+                        <button type="button" 
+                                id="generateCodeBtn"
+                                class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            Generate
+                        </button>
+                    </div>
+                    @error('code')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Maksimal 10 karakter, akan otomatis kapital</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Tempat Awal (Keberangkatan) -->
+                    <div>
+                        <label for="departure_location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <svg class="w-4 h-4 inline text-green-600 dark:text-green-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Tempat Awal (Keberangkatan)
+                        </label>
+                        <input type="text" 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('departure_location') border-red-500 @enderror" 
+                               id="departure_location" 
+                               name="departure_location" 
+                               value="{{ old('departure_location', $destination->departure_location) }}"
+                               placeholder="Contoh: Marina Ancol"
+                               required>
+                        @error('departure_location')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Maksimal 10 karakter, akan otomatis kapital</p>
+                    </div>
+                    
+                    <!-- Destinasi Tujuan -->
+                    <div>
+                        <label for="destination_location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <svg class="w-4 h-4 inline text-red-600 dark:text-red-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Destinasi Tujuan
+                        </label>
+                        <input type="text" 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('destination_location') border-red-500 @enderror" 
+                               id="destination_location" 
+                               name="destination_location" 
+                               value="{{ old('destination_location', $destination->destination_location) }}"
+                               placeholder="Contoh: Pulau Tidung"
+                               required>
+                        @error('destination_location')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Harga Dewasa -->
                     <div>
                         <label for="adult_price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -90,31 +121,6 @@
                         @enderror
                     </div>
                     
-                    <!-- Harga Anak -->
-                    <div>
-                        <label for="child_price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <svg class="w-4 h-4 inline text-cyan-600 dark:text-cyan-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                            </svg>
-                            Harga Anak
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
-                            </div>
-                            <input type="text" 
-                                   class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('child_price') border-red-500 @enderror" 
-                                   id="child_price_display" 
-                                   value="{{ old('child_price', $destination->child_price) }}"
-                                   placeholder="30.000"
-                                   inputmode="numeric">
-                            <input type="hidden" id="child_price" name="child_price" value="{{ old('child_price', $destination->child_price) }}" required>
-                        </div>
-                        @error('child_price')
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                        @enderror
-                    </div>
-                    
                     <!-- Harga Balita -->
                     <div>
                         <label for="toddler_price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -133,7 +139,7 @@
                                    value="{{ old('toddler_price', $destination->toddler_price ?? '') }}"
                                    placeholder="15.000"
                                    inputmode="numeric">
-                            <input type="hidden" id="toddler_price" name="toddler_price" value="{{ old('toddler_price', $destination->toddler_price ?? '') }}">
+                            <input type="hidden" id="toddler_price" name="toddler_price" value="{{ old('toddler_price', $destination->toddler_price ?? '') }}" required>
                         </div>
                         @error('toddler_price')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -185,7 +191,7 @@
                         </svg>
                         Kembali
                     </a>
-                    <button type="submit" class="btn btn-warning">
+                    <button type="submit" id="submitBtn" class="btn btn-warning" disabled>
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
                         </svg>
@@ -239,38 +245,61 @@
     const adultPriceHidden = document.getElementById('adult_price');
     
     adultPriceDisplay.addEventListener('keydown', handlePriceInput);
-    adultPriceDisplay.addEventListener('input', function() {
-        // Update hidden field with unformatted value
-        const rawValue = this.value.replace(/\D/g, '');
-        adultPriceHidden.value = rawValue;
-        // Format display
-        formatPrice(this);
-    });
-
-    // Apply to child price input
-    const childPriceDisplay = document.getElementById('child_price_display');
-    const childPriceHidden = document.getElementById('child_price');
     
-    childPriceDisplay.addEventListener('keydown', handlePriceInput);
-    childPriceDisplay.addEventListener('input', function() {
-        // Update hidden field with unformatted value
-        const rawValue = this.value.replace(/\D/g, '');
-        childPriceHidden.value = rawValue;
-        // Format display
-        formatPrice(this);
-    });
 
     // Apply to toddler price input
     const toddlerPriceDisplay = document.getElementById('toddler_price_display');
     const toddlerPriceHidden = document.getElementById('toddler_price');
     
     toddlerPriceDisplay.addEventListener('keydown', handlePriceInput);
+
+    // Form validation function
+    function validateForm() {
+        const code = document.getElementById('code').value.trim();
+        const departureLocation = document.getElementById('departure_location').value.trim();
+        const destinationLocation = document.getElementById('destination_location').value.trim();
+        const adultPrice = document.getElementById('adult_price').value;
+        const toddlerPrice = document.getElementById('toddler_price').value;
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Check if all required fields are filled
+        const isValid = code !== '' && departureLocation !== '' && destinationLocation !== '' && adultPrice !== '' && toddlerPrice !== '';
+        
+        if (isValid) {
+            // Enable button and make it orange (warning color)
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+            submitBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+        } else {
+            // Disable button and make it gray
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+            submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+        }
+    }
+
+    // Add event listeners to all required fields
+    document.getElementById('code').addEventListener('input', validateForm);
+    document.getElementById('departure_location').addEventListener('input', validateForm);
+    document.getElementById('destination_location').addEventListener('input', validateForm);
+    adultPriceDisplay.addEventListener('input', function() {
+        // Update hidden field with unformatted value
+        const rawValue = this.value.replace(/\D/g, '');
+        adultPriceHidden.value = rawValue;
+        // Format display
+        formatPrice(this);
+        // Validate form
+        validateForm();
+    });
+    
     toddlerPriceDisplay.addEventListener('input', function() {
         // Update hidden field with unformatted value
         const rawValue = this.value.replace(/\D/g, '');
         toddlerPriceHidden.value = rawValue;
         // Format display
         formatPrice(this);
+        // Validate form
+        validateForm();
     });
 
     // Format existing values on page load
@@ -282,13 +311,6 @@
             adultPriceDisplay.value = rawValue;
             formatPrice(adultPriceDisplay);
         }
-        if (childPriceDisplay.value) {
-            // Convert decimal to integer (remove .00 if present)
-            const rawValue = Math.floor(parseFloat(childPriceDisplay.value) || 0).toString();
-            childPriceHidden.value = rawValue;
-            childPriceDisplay.value = rawValue;
-            formatPrice(childPriceDisplay);
-        }
         if (toddlerPriceDisplay.value) {
             // Convert decimal to integer (remove .00 if present)
             const rawValue = Math.floor(parseFloat(toddlerPriceDisplay.value) || 0).toString();
@@ -296,6 +318,52 @@
             toddlerPriceDisplay.value = rawValue;
             formatPrice(toddlerPriceDisplay);
         }
+        
+        // Initial validation on page load
+        validateForm();
+
+        // Generate code functionality
+        document.getElementById('generateCodeBtn').addEventListener('click', function() {
+            const button = this;
+            const codeInput = document.getElementById('code');
+            
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = `
+                <svg class="w-4 h-4 inline mr-1 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generate...
+            `;
+            
+            // Make API call to generate code
+            fetch('{{ route("destinations.generate-code") }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.code) {
+                        codeInput.value = data.code.toUpperCase();
+                        // Trigger validation
+                        validateForm();
+                    } else {
+                        alert('Gagal generate kode. Silakan coba lagi.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan saat generate kode.');
+                })
+                .finally(() => {
+                    // Reset button state
+                    button.disabled = false;
+                    button.innerHTML = `
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Generate
+                    `;
+                });
+        });
     });
 </script>
 @endpush

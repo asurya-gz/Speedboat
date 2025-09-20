@@ -41,9 +41,8 @@
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kode</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nama Destinasi</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Rute</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Harga Dewasa</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Harga Anak</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Harga Balita</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                 @if(Auth::user()->isAdmin())
@@ -60,9 +59,21 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $destination->name }}</div>
+                                    <div class="text-sm text-gray-900 dark:text-white">
+                                        @if($destination->departure_location && $destination->destination_location)
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-green-600 dark:text-green-400 font-medium">{{ $destination->departure_location }}</span>
+                                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                                                </svg>
+                                                <span class="text-red-600 dark:text-red-400 font-medium">{{ $destination->destination_location }}</span>
+                                            </div>
+                                        @else
+                                            <span class="text-gray-400 dark:text-gray-500 italic">-</span>
+                                        @endif
+                                    </div>
                                     @if($destination->description)
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ Str::limit($destination->description, 50) }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ Str::limit($destination->description, 50) }}</div>
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -71,16 +82,11 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-semibold text-cyan-600 dark:text-cyan-300">
-                                        Rp {{ number_format($destination->child_price, 0, ',', '.') }}
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-semibold text-pink-600 dark:text-pink-300">
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">
                                         @if($destination->toddler_price)
                                             Rp {{ number_format($destination->toddler_price, 0, ',', '.') }}
                                         @else
-                                            <span class="text-gray-400 dark:text-gray-500 italic">Belum Di Set</span>
+                                            <span class="text-gray-800 dark:text-gray-400 italic">-</span>
                                         @endif
                                     </div>
                                 </td>

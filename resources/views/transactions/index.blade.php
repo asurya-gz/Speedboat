@@ -91,17 +91,19 @@
                                     @if($transaction->child_count > 0)
                                         + {{ $transaction->child_count }} Anak
                                     @endif
+                                    @if($transaction->toddler_count > 0)
+                                        + {{ $transaction->toddler_count }} Balita
+                                    @endif
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $transaction->schedule->destination->name }}</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $transaction->schedule->destination->departure_location }} → {{ $transaction->schedule->destination->destination_location }}</div>
                                 <div class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $transaction->schedule->departure_date->format('d M') }} - 
-                                    {{ $transaction->schedule->departure_time->format('H:i') }}
+                                    {{ $transaction->schedule->name }} - {{ $transaction->schedule->departure_time->format('H:i') }}
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                {{ $transaction->adult_count + $transaction->child_count }} tiket
+                                {{ $transaction->adult_count + $transaction->child_count + $transaction->toddler_count }} tiket
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-medium text-gray-900 dark:text-white">Rp {{ number_format($transaction->total_amount, 0, ',', '.') }}</div>

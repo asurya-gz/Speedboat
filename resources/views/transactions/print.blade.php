@@ -241,7 +241,7 @@
                 </div>
                 <div class="ticket-row">
                     <span>Tipe:</span>
-                    <strong>{{ $ticket->passenger_type === 'adult' ? 'DEWASA' : 'ANAK' }}</strong>
+                    <strong>{{ $ticket->passenger_type === 'adult' ? 'DEWASA' : ($ticket->passenger_type === 'toddler' ? 'BALITA' : 'ANAK') }}</strong>
                 </div>
                 
                 <!-- Trip Info -->
@@ -250,11 +250,11 @@
                 </div>
                 <div class="ticket-row">
                     <span>Tujuan:</span>
-                    <strong>{{ $transaction->schedule->destination->name }}</strong>
+                    <strong>{{ $transaction->schedule->destination->departure_location }} → {{ $transaction->schedule->destination->destination_location }}</strong>
                 </div>
                 <div class="ticket-row">
-                    <span>Tanggal:</span>
-                    <strong>{{ $transaction->schedule->departure_date->format('d M Y') }}</strong>
+                    <span>Jadwal:</span>
+                    <strong>{{ $transaction->schedule->name }}</strong>
                 </div>
                 <div class="ticket-row">
                     <span>Jam:</span>

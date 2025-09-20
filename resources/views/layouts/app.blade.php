@@ -187,13 +187,47 @@
                         @endif
 
                         @if(Auth::user()->isAdmin() || Auth::user()->isBoarding())
-                            <!-- QR Validation - accessible by Admin and Boarding -->
-                            <a href="#" onclick="alert('Fitur validasi QR akan segera hadir!')" class="sidebar-nav-item">
-                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h4m0 0V4m0 4h4m0 0V4m0 4v4"></path>
-                                </svg>
-                                Validasi QR
-                            </a>
+                            <!-- QR Menu with Dropdown - accessible by Admin and Boarding -->
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" 
+                                        class="sidebar-nav-item w-full flex items-center justify-between {{ request()->routeIs('tickets.validate*') ? 'active' : '' }}">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h4M4 8h4m0 0V4m0 4h4m0 0V4m0 4v4"></path>
+                                        </svg>
+                                        QR
+                                    </div>
+                                    <svg class="w-4 h-4 transition-transform duration-200" 
+                                         :class="open ? 'rotate-180' : ''" 
+                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                
+                                <div x-show="open" 
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 transform -translate-y-2"
+                                     x-transition:enter-end="opacity-100 transform translate-y-0"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 transform translate-y-0"
+                                     x-transition:leave-end="opacity-0 transform -translate-y-2"
+                                     class="ml-8 mt-2 space-y-1">
+                                    <a href="{{ route('tickets.validate.form') }}" 
+                                       class="sidebar-submenu-item {{ request()->routeIs('tickets.validate.form') ? 'active' : '' }}">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path>
+                                        </svg>
+                                        Validasi QR
+                                    </a>
+                                    <a href="{{ route('tickets.validate.history') }}" 
+                                       class="sidebar-submenu-item {{ request()->routeIs('tickets.validate.history') ? 'active' : '' }}">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Riwayat Validasi
+                                    </a>
+                                </div>
+                            </div>
                         @endif
 
                         @if(Auth::user()->isAdmin())
@@ -207,7 +241,8 @@
                             </a>
 
                             <!-- Reports - accessible by Admin only -->
-                            <a href="#" onclick="alert('Fitur laporan akan segera hadir!')" class="sidebar-nav-item">
+                            <a href="{{ route('reports.index') }}" 
+                               class="sidebar-nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                 </svg>

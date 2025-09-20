@@ -148,4 +148,16 @@ html.dark .sidebar-nav-subitem.active {
     .btn-lg {
         @apply px-6 py-3 text-base;
     }
+    
+    .form-input {
+        @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400;
+    }
+    
+    .form-select {
+        @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700;
+    }
+    
+    .form-textarea {
+        @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 resize-vertical;
+    }
 }

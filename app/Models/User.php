@@ -79,7 +79,7 @@ class User extends Authenticatable
     {
         $adminRoutes = ['destinations.*', 'schedules.*', 'users.*', 'reports.*'];
         $kasirRoutes = ['destinations.index', 'schedules.index', 'transactions.*', 'tickets.*'];
-        $boardingRoutes = ['schedules.index', 'tickets.validate', 'boarding.*'];
+        $boardingRoutes = ['schedules.index', 'tickets.validate*', 'tickets.search', 'boarding.*'];
 
         switch ($this->role) {
             case self::ROLE_ADMIN:

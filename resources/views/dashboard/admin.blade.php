@@ -225,10 +225,10 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                Jadwal ke {{ $schedule->destination->name }}
+                                {{ $schedule->destination->departure_location }} → {{ $schedule->destination->destination_location }}
                             </p>
                             <p class="text-sm text-gray-500 dark:text-gray-400">
-                                {{ $schedule->departure_date->format('d M Y') }} pukul {{ $schedule->departure_time->format('H:i') }}
+                                {{ $schedule->name }} pukul {{ $schedule->departure_time->format('H:i') }}
                             </p>
                         </div>
                         <div class="flex-shrink-0">

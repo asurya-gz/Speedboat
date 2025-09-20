@@ -11,7 +11,7 @@ class ScheduleController extends Controller
 {
     public function index()
     {
-        $schedules = Schedule::with('destination')->where('is_active', true)->orderBy('departure_date', 'asc')->orderBy('departure_time', 'asc')->paginate(10);
+        $schedules = Schedule::with('destination')->orderBy('is_active', 'desc')->orderBy('departure_time', 'asc')->paginate(10);
         return view('schedules.index', compact('schedules'));
     }
 
@@ -25,7 +25,7 @@ class ScheduleController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'destination_id' => 'required|exists:destinations,id',
-            'departure_date' => 'required|date|after_or_equal:today',
+            'name' => 'required|string|max:255',
             'departure_time' => 'required',
             'capacity' => 'required|integer|min:1'
         ]);
@@ -34,8 +34,8 @@ class ScheduleController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->all();
-        $data['available_seats'] = $request->capacity;
+        $data = $request->only(['destination_id', 'name', 'departure_time', 'capacity']);
+        $data['is_active'] = $request->has('is_active');
         
         Schedule::create($data);
         return redirect()->route('schedules.index')->with('success', 'Jadwal berhasil ditambahkan');
@@ -57,7 +57,7 @@ class ScheduleController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'destination_id' => 'required|exists:destinations,id',
-            'departure_date' => 'required|date',
+            'name' => 'required|string|max:255',
             'departure_time' => 'required',
             'capacity' => 'required|integer|min:1'
         ]);
@@ -66,7 +66,15 @@ class ScheduleController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $schedule->update($request->all());
+        // Update the schedule
+        $schedule->update([
+            'destination_id' => $request->destination_id,
+            'name' => $request->name,
+            'departure_time' => $request->departure_time,
+            'capacity' => $request->capacity,
+            'is_active' => $request->has('is_active')
+        ]);
+
         return redirect()->route('schedules.index')->with('success', 'Jadwal berhasil diupdate');
     }
 
@@ -74,6 +82,18 @@ class ScheduleController extends Controller
     {
         $schedule->update(['is_active' => false]);
         return redirect()->route('schedules.index')->with('success', 'Jadwal berhasil dihapus');
+    }
+
+    /**
+     * Toggle schedule active status.
+     */
+    public function toggleStatus(Schedule $schedule)
+    {
+        $schedule->update(['is_active' => !$schedule->is_active]);
+
+        $status = $schedule->is_active ? 'diaktifkan' : 'dinonaktifkan';
+        return redirect()->route('schedules.index')
+            ->with('success', "Jadwal berhasil {$status}.");
     }
 
     public function export()

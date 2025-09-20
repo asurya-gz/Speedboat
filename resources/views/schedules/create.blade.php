@@ -51,22 +51,22 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Tanggal Keberangkatan -->
+                    <!-- Nama Jadwal -->
                     <div>
-                        <label for="departure_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                             </svg>
-                            Tanggal Keberangkatan
+                            Nama Jadwal
                         </label>
-                        <input type="date" 
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 @error('departure_date') border-red-500 @enderror" 
-                               id="departure_date" 
-                               name="departure_date" 
-                               value="{{ old('departure_date') }}"
-                               min="{{ date('Y-m-d') }}"
+                        <input type="text" 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('name') border-red-500 @enderror" 
+                               id="name" 
+                               name="name" 
+                               value="{{ old('name') }}"
+                               placeholder="Contoh: Jadwal Pagi, Jadwal Siang"
                                required>
-                        @error('departure_date')
+                        @error('name')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
                     </div>
@@ -149,12 +149,12 @@
                             </div>
                         </div>
                         <div class="flex items-center">
-                            <svg class="w-5 h-5 text-cyan-600 dark:text-cyan-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                            <svg class="w-5 h-5 text-pink-600 dark:text-pink-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                             <div>
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">Anak</div>
-                                <div class="text-sm text-cyan-600 dark:text-cyan-400 font-semibold" id="child-price">-</div>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">Balita</div>
+                                <div class="text-sm text-pink-600 dark:text-pink-400 font-semibold" id="toddler-price">-</div>
                             </div>
                         </div>
                     </div>
@@ -168,7 +168,7 @@
                         </svg>
                         Kembali
                     </a>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
                         </svg>
@@ -186,11 +186,12 @@
         @foreach($destinations as $destination)
         {
             id: {{ $destination->id }},
-            name: @json($destination->name),
             code: @json($destination->code),
+            departure_location: @json($destination->departure_location),
+            destination_location: @json($destination->destination_location),
             adult_price: {{ $destination->adult_price }},
-            child_price: {{ $destination->child_price }},
-            display: @json($destination->code . ' - ' . $destination->name)
+            toddler_price: {{ $destination->toddler_price ?? 0 }},
+            display: @json($destination->code . ' - ' . $destination->departure_location . ' → ' . $destination->destination_location)
         },
         @endforeach
     ];
@@ -221,23 +222,27 @@
             hiddenInput.value = '';
             selectedDestination = null;
             pricePreview.classList.add('hidden');
+            validateForm();
             return;
         }
 
         const filteredDestinations = destinations.filter(destination => 
-            destination.name.toLowerCase().includes(query) || 
+            destination.departure_location.toLowerCase().includes(query) || 
+            destination.destination_location.toLowerCase().includes(query) ||
             destination.code.toLowerCase().includes(query) ||
             destination.display.toLowerCase().includes(query)
         );
 
         renderDropdown(filteredDestinations);
+        validateForm();
     });
 
     searchInput.addEventListener('focus', function() {
         if (this.value.length >= 1) {
             const query = this.value.toLowerCase();
             const filteredDestinations = destinations.filter(destination => 
-                destination.name.toLowerCase().includes(query) || 
+                destination.departure_location.toLowerCase().includes(query) || 
+                destination.destination_location.toLowerCase().includes(query) ||
                 destination.code.toLowerCase().includes(query) ||
                 destination.display.toLowerCase().includes(query)
             );
@@ -258,16 +263,16 @@
         } else {
             dropdown.innerHTML = filteredDestinations.map(destination => `
                 <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0" 
-                     onclick="selectDestination(${destination.id}, '${destination.display}', ${destination.adult_price}, ${destination.child_price})">
+                     onclick="selectDestination(${destination.id}, '${destination.display}', ${destination.adult_price}, ${destination.toddler_price})">
                     <div class="flex items-center">
                         <span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium mr-2">
                             ${destination.code}
                         </span>
-                        <span class="text-gray-900 dark:text-white">${destination.name}</span>
+                        <span class="text-gray-900 dark:text-white">${destination.departure_location} → ${destination.destination_location}</span>
                     </div>
                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Dewasa: Rp ${new Intl.NumberFormat('id-ID').format(destination.adult_price)} | 
-                        Anak: Rp ${new Intl.NumberFormat('id-ID').format(destination.child_price)}
+                        Balita: Rp ${new Intl.NumberFormat('id-ID').format(destination.toddler_price)}
                     </div>
                 </div>
             `).join('');
@@ -275,27 +280,64 @@
         dropdown.classList.remove('hidden');
     }
 
-    function selectDestination(id, display, adultPrice, childPrice) {
+    function selectDestination(id, display, adultPrice, toddlerPrice) {
         searchInput.value = display;
         hiddenInput.value = id;
-        selectedDestination = { id, display, adult_price: adultPrice, child_price: childPrice };
+        selectedDestination = { id, display, adult_price: adultPrice, toddler_price: toddlerPrice };
         dropdown.classList.add('hidden');
         
-        updatePricePreview({ adult_price: adultPrice, child_price: childPrice });
+        updatePricePreview({ adult_price: adultPrice, toddler_price: toddlerPrice });
+        validateForm();
     }
 
     function updatePricePreview(destination) {
         if (destination) {
             document.getElementById('adult-price').textContent = 'Rp ' + 
                 new Intl.NumberFormat('id-ID').format(destination.adult_price);
-            document.getElementById('child-price').textContent = 'Rp ' + 
-                new Intl.NumberFormat('id-ID').format(destination.child_price);
+            document.getElementById('toddler-price').textContent = 'Rp ' + 
+                new Intl.NumberFormat('id-ID').format(destination.toddler_price);
             
             pricePreview.classList.remove('hidden');
         } else {
             pricePreview.classList.add('hidden');
         }
     }
+
+    // Form validation function
+    function validateForm() {
+        const destinationId = document.getElementById('destination_id').value;
+        const name = document.getElementById('name').value.trim();
+        const departureTime = document.getElementById('departure_time').value;
+        const capacity = document.getElementById('capacity').value;
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Check if all required fields are filled
+        const isValid = destinationId !== '' && 
+                       name !== '' && 
+                       departureTime !== '' && 
+                       capacity !== '' && 
+                       parseInt(capacity) > 0;
+        
+        if (isValid) {
+            // Enable button and make it blue
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+            submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        } else {
+            // Disable button and make it gray
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+        }
+    }
+
+    // Add event listeners for form validation
+    document.getElementById('name').addEventListener('input', validateForm);
+    document.getElementById('departure_time').addEventListener('input', validateForm);
+    document.getElementById('capacity').addEventListener('input', validateForm);
+    
+    // Initial form validation
+    validateForm();
 
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {

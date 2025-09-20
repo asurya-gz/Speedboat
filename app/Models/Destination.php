@@ -10,7 +10,8 @@ class Destination extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
+        'departure_location',
+        'destination_location',
         'code',
         'adult_price',
         'child_price',

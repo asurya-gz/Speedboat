@@ -40,10 +40,9 @@
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Destinasi</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tanggal</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nama Jadwal</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Waktu</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kapasitas</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tersedia</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                 @if(Auth::user()->isAdmin())
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-32">Aksi</th>
@@ -59,17 +58,17 @@
                                             {{ $schedule->destination->code }}
                                         </span>
                                         <div>
-                                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $schedule->destination->name }}</div>
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $schedule->destination->departure_location }} → {{ $schedule->destination->destination_location }}</div>
                                             <div class="text-sm text-gray-500 dark:text-gray-400">
                                                 Dewasa: Rp {{ number_format($schedule->destination->adult_price, 0, ',', '.') }} |
-                                                Anak: Rp {{ number_format($schedule->destination->child_price, 0, ',', '.') }}
+                                                Balita: Rp {{ number_format($schedule->destination->toddler_price ?? 0, 0, ',', '.') }}
                                             </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $schedule->departure_date->format('d M Y') }}</div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ $schedule->departure_date->format('l') }}</div>
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $schedule->name }}</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ $schedule->capacity }} kursi</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-300">
@@ -81,30 +80,18 @@
                                     <div class="text-sm text-gray-500 dark:text-gray-400">penumpang</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @php
-                                        $percentage = ($schedule->available_seats / $schedule->capacity) * 100;
-                                        $colorClass = $percentage > 50 ? 'green' : ($percentage > 20 ? 'yellow' : 'red');
-                                    @endphp
-                                    <div class="flex items-center">
-                                        <span class="text-sm font-semibold text-{{ $colorClass }}-600 mr-2">{{ $schedule->available_seats }}</span>
-                                        <div class="w-16 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                                            <div class="bg-{{ $colorClass }}-600 h-2 rounded-full" style="width: {{ $percentage }}%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
                                     @if($schedule->is_active)
-                                        @if($schedule->departure_date->isPast())
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
-                                                Selesai
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-200 text-green-800 dark:text-green-800">
-                                                Aktif
-                                            </span>
-                                        @endif
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-200 text-green-800 dark:text-green-800">
+                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                            </svg>
+                                            Aktif
+                                        </span>
                                     @else
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                            </svg>
                                             Nonaktif
                                         </span>
                                     @endif
@@ -127,6 +114,25 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                 </svg>
                                             </a>
+                                            <form action="{{ route('schedules.toggle-status', $schedule) }}" 
+                                                  method="POST" 
+                                                  class="inline-block">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit" 
+                                                        class="@if($schedule->is_active) text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 @else text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300 @endif"
+                                                        title="@if($schedule->is_active) Nonaktifkan @else Aktifkan @endif">
+                                                    @if($schedule->is_active)
+                                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                                        </svg>
+                                                    @else
+                                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                                        </svg>
+                                                    @endif
+                                                </button>
+                                            </form>
                                             <form action="{{ route('schedules.destroy', $schedule) }}" 
                                                   method="POST" 
                                                   class="inline-block delete-form">
@@ -135,7 +141,7 @@
                                                 <button type="button" 
                                                         class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 delete-btn"
                                                         title="Hapus"
-                                                        data-schedule-name="{{ $schedule->destination->name }} - {{ $schedule->departure_date->format('d M Y') }} {{ $schedule->departure_time->format('H:i') }}">
+                                                        data-schedule-name="{{ $schedule->name }} - {{ $schedule->destination->departure_location }} → {{ $schedule->destination->destination_location }} ({{ $schedule->departure_time->format('H:i') }})">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                     </svg>

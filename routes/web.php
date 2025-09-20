@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,10 +50,18 @@ Route::middleware(['auth', 'role'])->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::resource('destinations', DestinationController::class);
         Route::patch('destinations/{destination}/toggle-status', [DestinationController::class, 'toggleStatus'])->name('destinations.toggle-status');
+        Route::get('destinations/generate/code', [DestinationController::class, 'generateCode'])->name('destinations.generate-code');
         Route::resource('schedules', ScheduleController::class);
+        Route::patch('schedules/{schedule}/toggle-status', [ScheduleController::class, 'toggleStatus'])->name('schedules.toggle-status');
         Route::get('users/export/csv', [UserController::class, 'export'])->name('users.export');
         Route::resource('users', UserController::class);
         Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        
+        // Reports routes - admin only
+        Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('reports/dashboard', [ReportController::class, 'dashboard'])->name('reports.dashboard');
+        Route::get('reports/transactions', [ReportController::class, 'transactions'])->name('reports.transactions');
+        Route::get('reports/tickets', [ReportController::class, 'tickets'])->name('reports.tickets');
     });
     
     // Kasir routes - read access to destinations and schedules, full access to transactions
@@ -82,5 +91,7 @@ Route::middleware(['auth', 'role'])->group(function () {
         Route::get('tickets/validate', [TicketController::class, 'validateForm'])->name('tickets.validate.form');
         Route::post('tickets/validate', [TicketController::class, 'processValidation'])->name('tickets.validate');
         Route::post('tickets/search', [TicketController::class, 'searchByCode'])->name('tickets.search');
+        Route::get('tickets/validation-history', [TicketController::class, 'validationHistory'])->name('tickets.validate.history');
+        Route::get('tickets/validation-history/export', [TicketController::class, 'exportValidationHistory'])->name('tickets.validate.history.export');
     });
 });

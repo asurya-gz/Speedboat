@@ -193,9 +193,10 @@ html.dark input, html.dark select, html.dark textarea {
                     <option value="{{ $schedule->id }}" 
                             data-adult-price="{{ $schedule->destination->adult_price }}"
                             data-child-price="{{ $schedule->destination->child_price }}"
-                            data-available-seats="{{ $schedule->available_seats }}">
-                        {{ $schedule->destination->name }} - {{ $schedule->departure_date->format('d M Y') }} pukul {{ $schedule->departure_time->format('H:i') }}
-                        ({{ $schedule->available_seats }} kursi tersedia)
+                            data-toddler-price="{{ $schedule->destination->toddler_price ?? 0 }}"
+                            data-capacity="{{ $schedule->capacity }}">
+                        {{ $schedule->destination->departure_location }} → {{ $schedule->destination->destination_location }} - {{ $schedule->name }} pukul {{ $schedule->departure_time->format('H:i') }}
+                        ({{ $schedule->capacity }} kapasitas)
                     </option>
                     @endforeach
                 </select>
@@ -205,70 +206,60 @@ html.dark input, html.dark select, html.dark textarea {
             </div>
 
             <!-- Info Harga -->
-            <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/50 rounded-lg" id="priceInfo" style="display: none;">
-                <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-2">Informasi Harga</h4>
+            <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg" id="priceInfo" style="display: none;">
+                <h4 class="font-semibold text-blue-800 dark:text-blue-200 mb-2">Informasi Harga</h4>
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <span class="text-blue-600 dark:text-blue-400">Dewasa:</span>
-                        <span class="font-semibold text-blue-800 dark:text-blue-300" id="adultPrice">-</span>
+                        <span class="text-blue-600 dark:text-blue-300">Dewasa:</span>
+                        <span class="font-semibold text-blue-800 dark:text-white" id="adultPrice">-</span>
                     </div>
                     <div>
-                        <span class="text-blue-600 dark:text-blue-400">Anak:</span>
-                        <span class="font-semibold text-blue-800 dark:text-blue-300" id="childPrice">-</span>
+                        <span class="text-blue-600 dark:text-blue-300">Balita:</span>
+                        <span class="font-semibold text-blue-800 dark:text-white" id="toddlerPrice">-</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Jumlah Penumpang -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Jumlah Penumpang *
+                </label>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="adult_count" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Dewasa</label>
+                        <input type="number" name="adult_count" id="adult_count" 
+                               class="form-input w-full" 
+                               value="{{ old('adult_count', 1) }}" 
+                               min="1" required onchange="generatePassengerFields()">
+                    </div>
+                    <div>
+                        <label for="toddler_count" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Balita</label>
+                        <input type="number" name="toddler_count" id="toddler_count" 
+                               class="form-input w-full" 
+                               value="{{ old('toddler_count', 0) }}" 
+                               min="0" onchange="generatePassengerFields()">
+                    </div>
+                </div>
+                <input type="hidden" name="child_count" value="0">
+                @error('adult_count')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
             </div>
 
             <!-- Data Penumpang -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                    <label for="passenger_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Nama Penumpang Utama *
-                    </label>
-                    <input type="text" name="passenger_name" id="passenger_name" 
-                           class="form-input w-full" 
-                           value="{{ old('passenger_name') }}" 
-                           placeholder="Masukkan nama penumpang utama"
-                           required>
-                    @error('passenger_name')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Jumlah Penumpang *
-                    </label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="adult_count" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Dewasa</label>
-                            <input type="number" name="adult_count" id="adult_count" 
-                                   class="form-input w-full" 
-                                   value="{{ old('adult_count', 1) }}" 
-                                   min="1" max="10" required onchange="calculateTotal()">
-                        </div>
-                        <div>
-                            <label for="child_count" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Anak</label>
-                            <input type="number" name="child_count" id="child_count" 
-                                   class="form-input w-full" 
-                                   value="{{ old('child_count', 0) }}" 
-                                   min="0" max="10" onchange="calculateTotal()">
-                        </div>
-                    </div>
-                    @error('adult_count')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+            <div id="passenger_fields" class="mb-6">
+                <!-- Field nama penumpang akan di-generate secara dinamis -->
             </div>
 
             <!-- Total Harga -->
-            <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/50 rounded-lg" id="totalSection" style="display: none;">
+            <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg" id="totalSection" style="display: none;">
                 <div class="flex justify-between items-center">
                     <div>
-                        <h4 class="font-semibold text-green-800 dark:text-green-300">Total Pembayaran</h4>
-                        <p class="text-sm text-green-600 dark:text-green-400" id="breakdown">-</p>
+                        <h4 class="font-semibold text-green-800 dark:text-green-200">Total Pembayaran</h4>
+                        <p class="text-sm text-green-600 dark:text-green-300" id="breakdown">-</p>
                     </div>
-                    <div class="text-2xl font-bold text-green-800 dark:text-green-300" id="totalAmount">Rp 0</div>
+                    <div class="text-2xl font-bold text-green-800 dark:text-white" id="totalAmount">Rp 0</div>
                 </div>
             </div>
 
@@ -337,7 +328,7 @@ html.dark input, html.dark select, html.dark textarea {
                 <a href="{{ route('dashboard') }}" class="btn btn-secondary">
                     Batal
                 </a>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path>
                     </svg>
@@ -357,9 +348,10 @@ function updatePricing() {
     if (option.value) {
         const adultPrice = parseInt(option.dataset.adultPrice);
         const childPrice = parseInt(option.dataset.childPrice);
+        const toddlerPrice = parseInt(option.dataset.toddlerPrice || 0);
         
         document.getElementById('adultPrice').textContent = 'Rp ' + adultPrice.toLocaleString('id-ID');
-        document.getElementById('childPrice').textContent = 'Rp ' + childPrice.toLocaleString('id-ID');
+        document.getElementById('toddlerPrice').textContent = 'Rp ' + toddlerPrice.toLocaleString('id-ID');
         priceInfo.style.display = 'block';
         
         calculateTotal();
@@ -367,6 +359,7 @@ function updatePricing() {
         priceInfo.style.display = 'none';
         document.getElementById('totalSection').style.display = 'none';
     }
+    validateForm();
 }
 
 function calculateTotal() {
@@ -377,11 +370,13 @@ function calculateTotal() {
     
     const adultPrice = parseInt(option.dataset.adultPrice);
     const childPrice = parseInt(option.dataset.childPrice);
+    const toddlerPrice = parseInt(option.dataset.toddlerPrice || 0);
     const adultCount = parseInt(document.getElementById('adult_count').value) || 0;
     const childCount = parseInt(document.getElementById('child_count').value) || 0;
+    const toddlerCount = parseInt(document.getElementById('toddler_count').value) || 0;
     const availableSeats = parseInt(option.dataset.availableSeats);
     
-    const totalPassengers = adultCount + childCount;
+    const totalPassengers = adultCount + childCount + toddlerCount;
     
     // Check seat availability
     if (totalPassengers > availableSeats) {
@@ -389,11 +384,13 @@ function calculateTotal() {
         return;
     }
     
-    const totalAmount = (adultPrice * adultCount) + (childPrice * childCount);
+    const totalAmount = (adultPrice * adultCount) + (childPrice * childCount) + (toddlerPrice * toddlerCount);
     
     document.getElementById('totalAmount').textContent = 'Rp ' + totalAmount.toLocaleString('id-ID');
-    document.getElementById('breakdown').textContent = `${adultCount} Dewasa + ${childCount} Anak = ${totalPassengers} penumpang`;
+    document.getElementById('breakdown').textContent = `${adultCount} Dewasa + ${toddlerCount} Balita = ${totalPassengers} penumpang`;
     document.getElementById('totalSection').style.display = 'block';
+    
+    validateForm();
 }
 
 function togglePaymentFields() {
@@ -409,6 +406,97 @@ function togglePaymentFields() {
     
     // Update visual selection
     updatePaymentSelection();
+    validateForm();
+}
+
+// Form validation function
+function generatePassengerFields() {
+    const adultCount = parseInt(document.getElementById('adult_count').value) || 0;
+    const toddlerCount = parseInt(document.getElementById('toddler_count').value) || 0;
+    const totalPassengers = adultCount + toddlerCount;
+    
+    const container = document.getElementById('passenger_fields');
+    let html = '';
+    
+    if (totalPassengers > 0) {
+        html += '<h4 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">Data Penumpang</h4>';
+        html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+        
+        // Generate adult passenger fields
+        for (let i = 1; i <= adultCount; i++) {
+            html += `
+                <div>
+                    <label for="adult_name_${i}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Nama Penumpang Dewasa ${i} *
+                    </label>
+                    <input type="text" name="adult_names[]" id="adult_name_${i}" 
+                           class="form-input w-full" 
+                           placeholder="Masukkan nama lengkap"
+                           required>
+                </div>
+            `;
+        }
+        
+        // Generate toddler passenger fields
+        for (let i = 1; i <= toddlerCount; i++) {
+            html += `
+                <div>
+                    <label for="toddler_name_${i}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Nama Penumpang Balita ${i} *
+                    </label>
+                    <input type="text" name="toddler_names[]" id="toddler_name_${i}" 
+                           class="form-input w-full" 
+                           placeholder="Masukkan nama lengkap"
+                           required>
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+    }
+    
+    container.innerHTML = html;
+    calculateTotal();
+    validateForm();
+}
+
+function validateForm() {
+    const scheduleId = document.getElementById('schedule_id').value;
+    const adultCount = parseInt(document.getElementById('adult_count').value) || 0;
+    const toddlerCount = parseInt(document.getElementById('toddler_count').value) || 0;
+    const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Check if all passenger name fields are filled
+    let allNamesFilled = true;
+    const adultNameInputs = document.querySelectorAll('input[name="adult_names[]"]');
+    const toddlerNameInputs = document.querySelectorAll('input[name="toddler_names[]"]');
+    
+    adultNameInputs.forEach(input => {
+        if (!input.value.trim()) allNamesFilled = false;
+    });
+    
+    toddlerNameInputs.forEach(input => {
+        if (!input.value.trim()) allNamesFilled = false;
+    });
+    
+    // Check if all required fields are filled
+    const isValid = scheduleId !== '' && 
+                   adultCount >= 1 && 
+                   allNamesFilled && 
+                   paymentMethod !== undefined;
+    
+    if (isValid) {
+        // Enable button and make it blue
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+        submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+    } else {
+        // Disable button and make it gray
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+    }
 }
 
 function updatePaymentSelection() {
@@ -444,8 +532,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Function to remove leading zeros from number inputs
+    function normalizeNumberInput(input) {
+        let value = input.value;
+        if (value && value.length > 1 && value.charAt(0) === '0') {
+            // Remove leading zeros, but keep single '0' if that's the only digit
+            value = parseInt(value, 10).toString();
+            input.value = value;
+        }
+    }
+    
+    // Add event listeners for form validation
+    document.getElementById('schedule_id').addEventListener('change', validateForm);
+    
+    // Generate initial passenger fields
+    generatePassengerFields();
+    
+    // Adult count input
+    document.getElementById('adult_count').addEventListener('input', function() {
+        normalizeNumberInput(this);
+        generatePassengerFields();
+    });
+    document.getElementById('adult_count').addEventListener('blur', function() {
+        normalizeNumberInput(this);
+    });
+    
+    // Toddler count input
+    document.getElementById('toddler_count').addEventListener('input', function() {
+        normalizeNumberInput(this);
+        generatePassengerFields();
+    });
+    document.getElementById('toddler_count').addEventListener('blur', function() {
+        normalizeNumberInput(this);
+    });
+    
     // Initialize payment reference field visibility
     togglePaymentFields();
+    
+    // Initial form validation
+    validateForm();
 });
 </script>
 @endsection

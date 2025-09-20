@@ -49,15 +49,22 @@
                             Email
                         </label>
                         <input type="email" 
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('email') border-red-500 @enderror" 
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed @error('email') border-red-500 @enderror" 
                                id="email" 
                                name="email" 
                                value="{{ old('email', $user->email) }}"
                                placeholder="contoh@email.com"
+                               readonly
                                required>
                         @error('email')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                            Email tidak dapat diubah untuk menjaga keamanan akun
+                        </p>
                     </div>
                 </div>
 
@@ -212,7 +219,7 @@
                         </svg>
                         Kembali
                     </a>
-                    <button type="submit" class="btn btn-warning">
+                    <button type="submit" id="submitBtn" class="btn btn-warning" disabled>
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
                         </svg>
@@ -242,7 +249,37 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             roleText.textContent = 'Pilih role untuk melihat deskripsi';
         }
+        // Validate form when role changes
+        validateForm();
     });
+
+    // Form validation function
+    function validateForm() {
+        const name = document.getElementById('name').value.trim();
+        const role = document.getElementById('role').value;
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Check if all required fields are filled (email is readonly, so no need to validate)
+        const isValid = name !== '' && role !== '';
+        
+        if (isValid) {
+            // Enable button and make it orange (warning color)
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+            submitBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+        } else {
+            // Disable button and make it gray
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+            submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+        }
+    }
+
+    // Add event listeners to all required fields (email removed since it's readonly)
+    document.getElementById('name').addEventListener('input', validateForm);
+    
+    // Initial validation on page load
+    validateForm();
 });
 </script>
 

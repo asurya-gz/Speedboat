@@ -54,7 +54,10 @@
                         @if($transaction->child_count > 0)
                             + {{ $transaction->child_count }} Anak
                         @endif
-                        ({{ $transaction->adult_count + $transaction->child_count }} total)
+                        @if($transaction->toddler_count > 0)
+                            + {{ $transaction->toddler_count }} Balita
+                        @endif
+                        ({{ $transaction->adult_count + $transaction->child_count + ($transaction->toddler_count ?? 0) }} total)
                     </span>
                 </div>
                 
@@ -115,11 +118,11 @@
                         @method('PATCH')
                         
                         <div>
-                            <label for="payment_reference" class="block text-sm font-medium text-gray-700 mb-2">
+                            <label for="payment_reference" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Konfirmasi Pembayaran
                             </label>
                             <input type="text" name="payment_reference" id="payment_reference" 
-                                   class="form-input w-full" 
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400" 
                                    placeholder="Masukkan referensi pembayaran..."
                                    value="{{ $transaction->payment_reference }}"
                                    required>
@@ -143,7 +146,7 @@
             <div class="p-6 space-y-4">
                 <div class="flex justify-between">
                     <span class="text-gray-600 dark:text-gray-400">Tujuan</span>
-                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->destination->name }}</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->destination->departure_location }} → {{ $transaction->schedule->destination->destination_location }}</span>
                 </div>
                 
                 <div class="flex justify-between">
@@ -152,8 +155,8 @@
                 </div>
                 
                 <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Tanggal Keberangkatan</span>
-                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->departure_date->format('d M Y') }}</span>
+                    <span class="text-gray-600 dark:text-gray-400">Nama Jadwal</span>
+                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->name }}</span>
                 </div>
                 
                 <div class="flex justify-between">
@@ -164,11 +167,6 @@
                 <div class="flex justify-between">
                     <span class="text-gray-600 dark:text-gray-400">Kapasitas Speedboat</span>
                     <span class="font-semibold dark:text-white">{{ $transaction->schedule->capacity }} penumpang</span>
-                </div>
-                
-                <div class="flex justify-between">
-                    <span class="text-gray-600 dark:text-gray-400">Kursi Tersedia</span>
-                    <span class="font-semibold dark:text-white">{{ $transaction->schedule->available_seats }} kursi</span>
                 </div>
                 
                 @if($transaction->schedule->destination->description)
@@ -229,8 +227,10 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    {{ $ticket->passenger_type === 'adult' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
-                                    {{ $ticket->passenger_type === 'adult' ? 'Dewasa' : 'Anak' }}
+                                    {{ $ticket->passenger_type === 'adult' ? 'bg-blue-100 text-blue-800' : 
+                                       ($ticket->passenger_type === 'child' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800') }}">
+                                    {{ $ticket->passenger_type === 'adult' ? 'Dewasa' : 
+                                       ($ticket->passenger_type === 'child' ? 'Anak' : 'Balita') }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
@@ -239,7 +239,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                     {{ $ticket->status === 'active' ? 'bg-blue-100 text-blue-800' : 
-                                       ($ticket->status === 'boarded' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800') }}">
+                                       ($ticket->status === 'used' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800') }}">
                                     {{ ucfirst($ticket->status) }}
                                 </span>
                             </td>

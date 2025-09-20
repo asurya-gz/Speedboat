@@ -135,7 +135,7 @@
                         </svg>
                         Kembali
                     </a>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" id="submitBtn" class="btn btn-primary" disabled>
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
                         </svg>
@@ -165,7 +165,39 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             roleText.textContent = 'Pilih role untuk melihat deskripsi';
         }
+        // Validate form when role changes
+        validateForm();
     });
+
+    // Form validation function
+    function validateForm() {
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const role = document.getElementById('role').value;
+        const submitBtn = document.getElementById('submitBtn');
+        
+        // Check if all required fields are filled
+        const isValid = name !== '' && email !== '' && role !== '';
+        
+        if (isValid) {
+            // Enable button and make it blue
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+            submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        } else {
+            // Disable button and make it gray
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+        }
+    }
+
+    // Add event listeners to all required fields
+    document.getElementById('name').addEventListener('input', validateForm);
+    document.getElementById('email').addEventListener('input', validateForm);
+    
+    // Initial validation on page load
+    validateForm();
 });
 </script>
 
