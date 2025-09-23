@@ -8,6 +8,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SpeedboatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,13 +47,16 @@ Route::middleware('auth')->group(function () {
 
 // Protected routes with role-based access
 Route::middleware(['auth', 'role'])->group(function () {
-    // Admin routes - full access to destinations, schedules, and users CRUD
+    // Admin routes - full access to destinations, schedules, speedboats, and users CRUD
     Route::middleware('role:admin')->group(function () {
         Route::resource('destinations', DestinationController::class);
         Route::patch('destinations/{destination}/toggle-status', [DestinationController::class, 'toggleStatus'])->name('destinations.toggle-status');
         Route::get('destinations/generate/code', [DestinationController::class, 'generateCode'])->name('destinations.generate-code');
         Route::resource('schedules', ScheduleController::class);
         Route::patch('schedules/{schedule}/toggle-status', [ScheduleController::class, 'toggleStatus'])->name('schedules.toggle-status');
+        Route::resource('speedboats', SpeedboatController::class);
+        Route::patch('speedboats/{speedboat}/toggle-status', [SpeedboatController::class, 'toggleStatus'])->name('speedboats.toggle-status');
+        Route::get('speedboats/generate/code', [SpeedboatController::class, 'generateCode'])->name('speedboats.generate-code');
         Route::get('users/export/csv', [UserController::class, 'export'])->name('users.export');
         Route::resource('users', UserController::class);
         Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
@@ -64,7 +68,7 @@ Route::middleware(['auth', 'role'])->group(function () {
         Route::get('reports/tickets', [ReportController::class, 'tickets'])->name('reports.tickets');
     });
     
-    // Kasir routes - read access to destinations and schedules, full access to transactions
+    // Kasir routes - read access to destinations, schedules, speedboats, full access to transactions
     Route::middleware('role:kasir,admin')->group(function () {
         Route::get('destinations', [DestinationController::class, 'index'])->name('destinations.index');
         Route::get('destinations/{destination}', [DestinationController::class, 'show'])->name('destinations.show');
@@ -72,6 +76,8 @@ Route::middleware(['auth', 'role'])->group(function () {
         Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
         Route::get('schedules/{schedule}', [ScheduleController::class, 'show'])->name('schedules.show');
         Route::get('schedules/export/csv', [ScheduleController::class, 'export'])->name('schedules.export');
+        Route::get('speedboats', [SpeedboatController::class, 'index'])->name('speedboats.index');
+        Route::get('speedboats/{speedboat}', [SpeedboatController::class, 'show'])->name('speedboats.show');
         
         Route::resource('transactions', TransactionController::class);
         Route::patch('transactions/{transaction}/confirm-payment', [TransactionController::class, 'confirmPayment'])->name('transactions.confirm-payment');

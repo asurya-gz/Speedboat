@@ -129,6 +129,15 @@
                                 </svg>
                                 Destinasi
                             </a>
+
+                            <!-- Speedboat - accessible by Admin and Kasir -->
+                            <a href="{{ route('speedboats.index') }}" 
+                               class="sidebar-nav-item {{ request()->routeIs('speedboats.*') ? 'active' : '' }}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 13v-1m4 1v-3m4 3V8M8 21l4-7 4 7M3 4h18M4 4h16v4a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                                </svg>
+                                Speedboat
+                            </a>
                         @endif
 
                         @if(Auth::user()->isAdmin() || Auth::user()->isKasir() || Auth::user()->isBoarding())
