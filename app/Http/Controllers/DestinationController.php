@@ -8,9 +8,32 @@ use Illuminate\Support\Facades\Validator;
 
 class DestinationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $destinations = Destination::latest()->paginate(10);
+        $query = Destination::query();
+        
+        // Handle search parameter
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', '%' . $search . '%')
+                  ->orWhere('departure_location', 'like', '%' . $search . '%')
+                  ->orWhere('destination_location', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
+            });
+        }
+        
+        // Handle status filter
+        if ($request->filled('status')) {
+            $status = $request->get('status');
+            if ($status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+        
+        $destinations = $query->latest()->paginate(10)->appends($request->query());
         return view('destinations.index', compact('destinations'));
     }
 

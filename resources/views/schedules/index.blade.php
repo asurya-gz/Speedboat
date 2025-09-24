@@ -33,6 +33,85 @@
             </h3>
         </div>
         
+        <!-- Search and Filter Section -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+            <form method="GET" action="{{ route('schedules.index') }}" class="flex flex-wrap gap-4 items-end">
+                <!-- Search Input -->
+                <div class="flex-1 min-w-64">
+                    <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pencarian</label>
+                    <div class="relative">
+                        <input type="text" 
+                               id="search" 
+                               name="search" 
+                               value="{{ request('search') }}" 
+                               placeholder="Cari berdasarkan nama jadwal, destinasi, atau speedboat..." 
+                               class="block w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:placeholder-gray-400 text-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status Filter -->
+                <div class="min-w-40">
+                    <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
+                    <select id="status" 
+                            name="status" 
+                            class="block w-full py-2 pl-3 pr-10 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                        <option value="">Semua Status</option>
+                        <option value="active" {{ request('status') === 'active' ? 'selected' : '' }}>Aktif</option>
+                        <option value="inactive" {{ request('status') === 'inactive' ? 'selected' : '' }}>Nonaktif</option>
+                    </select>
+                </div>
+                
+                <!-- Time Filter -->
+                <div class="min-w-48">
+                    <label for="time_period" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Waktu Keberangkatan</label>
+                    <select id="time_period" 
+                            name="time_period" 
+                            class="block w-full py-2 pl-3 pr-10 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                        <option value="">Semua Waktu</option>
+                        <option value="morning" {{ request('time_period') === 'morning' ? 'selected' : '' }}>Pagi (06:00-11:59)</option>
+                        <option value="afternoon" {{ request('time_period') === 'afternoon' ? 'selected' : '' }}>Siang (12:00-17:59)</option>
+                        <option value="evening" {{ request('time_period') === 'evening' ? 'selected' : '' }}>Malam (18:00-23:59)</option>
+                    </select>
+                </div>
+                
+                <!-- Destination Filter -->
+                <div class="min-w-48">
+                    <label for="destination_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destinasi</label>
+                    <select id="destination_id" 
+                            name="destination_id" 
+                            class="block w-full py-2 pl-3 pr-10 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                        <option value="">Semua Destinasi</option>
+                        @foreach($destinations as $destination)
+                            <option value="{{ $destination->id }}" {{ request('destination_id') == $destination->id ? 'selected' : '' }}>
+                                {{ $destination->departure_location }} → {{ $destination->destination_location }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex space-x-2">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Cari
+                    </button>
+                    <a href="{{ route('schedules.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+        
         <div class="p-6">
             @if($schedules->total() > 0)
                 <div class="overflow-x-auto">

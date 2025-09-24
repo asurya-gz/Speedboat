@@ -28,6 +28,72 @@
         </div>
     </div>
 
+    <!-- Filter Form -->
+    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 mb-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Filter & Pencarian</h3>
+        <form method="GET" action="{{ route('transactions.index') }}">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div>
+                    <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tanggal Mulai</label>
+                    <input type="date" 
+                           id="start_date" 
+                           name="start_date" 
+                           value="{{ request('start_date') }}"
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tanggal Selesai</label>
+                    <input type="date" 
+                           id="end_date" 
+                           name="end_date" 
+                           value="{{ request('end_date') }}"
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pencarian</label>
+                    <input type="text" 
+                           id="search" 
+                           name="search" 
+                           value="{{ request('search') }}"
+                           placeholder="Kode transaksi, nama, destinasi..."
+                           class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="payment_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status Pembayaran</label>
+                    <select id="payment_status" 
+                            name="payment_status"
+                            class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Semua Status</option>
+                        <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
+                        <option value="cancelled" {{ request('payment_status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                    </select>
+                </div>
+            </div>
+            <input type="hidden" name="per_page" value="{{ $perPage }}">
+            <div class="flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Filter
+                </button>
+                <a href="{{ route('transactions.index') }}" class="btn btn-secondary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Reset
+                </a>
+                <button type="button" onclick="exportData()" class="btn btn-success">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export Excel
+                </button>
+            </div>
+        </form>
+    </div>
+
     <!-- Transactions Table -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -293,6 +359,25 @@ function changePerPage(perPage) {
     
     // Redirect to new URL
     window.location.href = url.toString();
+}
+
+function exportData() {
+    // Get current filter values
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    const search = document.getElementById('search').value;
+    const paymentStatus = document.getElementById('payment_status').value;
+    
+    // Build export URL with current filters
+    const exportUrl = new URL('{{ route("transactions.export") }}', window.location.origin);
+    
+    if (startDate) exportUrl.searchParams.set('start_date', startDate);
+    if (endDate) exportUrl.searchParams.set('end_date', endDate);
+    if (search) exportUrl.searchParams.set('search', search);
+    if (paymentStatus) exportUrl.searchParams.set('payment_status', paymentStatus);
+    
+    // Redirect to export URL
+    window.location.href = exportUrl.toString();
 }
 </script>
 @endsection

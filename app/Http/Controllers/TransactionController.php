@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\TransactionsExport;
 
 class TransactionController extends Controller
 {
@@ -22,9 +24,37 @@ class TransactionController extends Controller
             $perPage = 10;
         }
         
-        $transactions = Transaction::with(['schedule.destination', 'creator'])
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        $query = Transaction::with(['schedule.destination', 'creator']);
+        
+        // Date range filter
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+        
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+        
+        // Search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('transaction_code', 'like', "%{$search}%")
+                  ->orWhere('passenger_name', 'like', "%{$search}%")
+                  ->orWhereHas('schedule.destination', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('departure_location', 'like', "%{$search}%")
+                        ->orWhere('destination_location', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        // Payment status filter
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+        
+        $transactions = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return view('transactions.index', compact('transactions', 'perPage'));
     }
@@ -195,5 +225,40 @@ class TransactionController extends Controller
         $transaction->load(['schedule.destination', 'tickets']);
         
         return view('transactions.print', compact('transaction'));
+    }
+    
+    public function export(Request $request)
+    {
+        $query = Transaction::with(['schedule.destination', 'creator']);
+        
+        // Apply same filters as index method
+        if ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        }
+        
+        if ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+        
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('transaction_code', 'like', "%{$search}%")
+                  ->orWhere('passenger_name', 'like', "%{$search}%")
+                  ->orWhereHas('schedule.destination', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%")
+                        ->orWhere('departure_location', 'like', "%{$search}%")
+                        ->orWhere('destination_location', 'like', "%{$search}%");
+                  });
+            });
+        }
+        
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+        
+        $transactions = $query->orderBy('created_at', 'desc')->get();
+        
+        return Excel::download(new TransactionsExport($transactions), 'transactions-' . now()->format('Y-m-d') . '.xlsx');
     }
 }

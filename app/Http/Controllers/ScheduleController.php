@@ -10,10 +10,66 @@ use Illuminate\Support\Facades\Validator;
 
 class ScheduleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $schedules = Schedule::with('destination', 'speedboat')->orderBy('is_active', 'desc')->orderBy('departure_time', 'asc')->paginate(10);
-        return view('schedules.index', compact('schedules'));
+        $query = Schedule::with('destination', 'speedboat');
+        
+        // Handle search parameter
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhereHas('destination', function ($destQuery) use ($search) {
+                      $destQuery->where('departure_location', 'like', '%' . $search . '%')
+                               ->orWhere('destination_location', 'like', '%' . $search . '%')
+                               ->orWhere('code', 'like', '%' . $search . '%');
+                  })
+                  ->orWhereHas('speedboat', function ($speedQuery) use ($search) {
+                      $speedQuery->where('name', 'like', '%' . $search . '%')
+                                 ->orWhere('code', 'like', '%' . $search . '%');
+                  });
+            });
+        }
+        
+        // Handle status filter
+        if ($request->filled('status')) {
+            $status = $request->get('status');
+            if ($status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+        
+        // Handle time period filter
+        if ($request->filled('time_period')) {
+            $timePeriod = $request->get('time_period');
+            if ($timePeriod === 'morning') {
+                $query->whereTime('departure_time', '>=', '06:00')
+                      ->whereTime('departure_time', '<=', '11:59');
+            } elseif ($timePeriod === 'afternoon') {
+                $query->whereTime('departure_time', '>=', '12:00')
+                      ->whereTime('departure_time', '<=', '17:59');
+            } elseif ($timePeriod === 'evening') {
+                $query->whereTime('departure_time', '>=', '18:00')
+                      ->whereTime('departure_time', '<=', '23:59');
+            }
+        }
+        
+        // Handle destination filter
+        if ($request->filled('destination_id')) {
+            $query->where('destination_id', $request->get('destination_id'));
+        }
+        
+        $schedules = $query->orderBy('is_active', 'desc')
+                          ->orderBy('departure_time', 'asc')
+                          ->paginate(10)
+                          ->appends($request->query());
+        
+        // Get destinations for the filter dropdown
+        $destinations = Destination::where('is_active', true)->get();
+        
+        return view('schedules.index', compact('schedules', 'destinations'));
     }
 
     public function create()

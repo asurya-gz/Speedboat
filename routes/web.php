@@ -82,6 +82,7 @@ Route::middleware(['auth', 'role'])->group(function () {
         Route::resource('transactions', TransactionController::class);
         Route::patch('transactions/{transaction}/confirm-payment', [TransactionController::class, 'confirmPayment'])->name('transactions.confirm-payment');
         Route::get('transactions/{transaction}/print', [TransactionController::class, 'printTickets'])->name('transactions.print');
+        Route::get('transactions/export/excel', [TransactionController::class, 'export'])->name('transactions.export');
     });
     
     // Schedules - read access for kasir, boarding, admin

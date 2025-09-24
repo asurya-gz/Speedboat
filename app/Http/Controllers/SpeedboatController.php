@@ -8,9 +8,44 @@ use Illuminate\Support\Facades\Validator;
 
 class SpeedboatController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $speedboats = Speedboat::latest()->paginate(10);
+        $query = Speedboat::query();
+        
+        // Handle search parameter
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('code', 'like', '%' . $search . '%')
+                  ->orWhere('name', 'like', '%' . $search . '%')
+                  ->orWhere('type', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%');
+            });
+        }
+        
+        // Handle status filter
+        if ($request->filled('status')) {
+            $status = $request->get('status');
+            if ($status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($status === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+        
+        // Handle capacity filter
+        if ($request->filled('capacity')) {
+            $capacity = $request->get('capacity');
+            if ($capacity === 'small') {
+                $query->where('capacity', '<=', 20);
+            } elseif ($capacity === 'medium') {
+                $query->whereBetween('capacity', [21, 50]);
+            } elseif ($capacity === 'large') {
+                $query->where('capacity', '>=', 51);
+            }
+        }
+        
+        $speedboats = $query->latest()->paginate(10)->appends($request->query());
         return view('speedboats.index', compact('speedboats'));
     }
 
