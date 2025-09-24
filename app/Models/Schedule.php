@@ -11,6 +11,7 @@ class Schedule extends Model
 
     protected $fillable = [
         'destination_id',
+        'speedboat_id',
         'name',
         'departure_time',
         'capacity',
@@ -26,6 +27,11 @@ class Schedule extends Model
     public function destination()
     {
         return $this->belongsTo(Destination::class);
+    }
+
+    public function speedboat()
+    {
+        return $this->belongsTo(Speedboat::class);
     }
 
     public function transactions()

@@ -31,7 +31,7 @@ class TransactionController extends Controller
 
     public function create()
     {
-        $schedules = Schedule::with('destination')
+        $schedules = Schedule::with('destination', 'speedboat')
             ->where('is_active', true)
             ->orderBy('departure_time')
             ->get();

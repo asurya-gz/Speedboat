@@ -40,7 +40,7 @@
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Destinasi</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nama Jadwal</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Speedboat</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Waktu</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kapasitas</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
@@ -67,8 +67,20 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $schedule->name }}</div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ $schedule->capacity }} kursi</div>
+                                    @if($schedule->speedboat)
+                                        <div class="flex items-center">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 mr-3">
+                                                {{ $schedule->speedboat->code }}
+                                            </span>
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $schedule->speedboat->name }}</div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400">{{ $schedule->speedboat->type }} - Kapasitas: {{ $schedule->speedboat->capacity }}</div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $schedule->name }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">Speedboat belum dipilih</div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-300">
@@ -141,7 +153,7 @@
                                                 <button type="button" 
                                                         class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 delete-btn"
                                                         title="Hapus"
-                                                        data-schedule-name="{{ $schedule->name }} - {{ $schedule->destination->departure_location }} → {{ $schedule->destination->destination_location }} ({{ $schedule->departure_time->format('H:i') }})">
+                                                        data-schedule-name="@if($schedule->speedboat){{ $schedule->speedboat->name }}@else{{ $schedule->name }}@endif - {{ $schedule->destination->departure_location }} → {{ $schedule->destination->destination_location }} ({{ $schedule->departure_time->format('H:i') }})">
                                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                     </svg>

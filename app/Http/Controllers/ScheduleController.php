@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Schedule;
 use App\Models\Destination;
+use App\Models\Speedboat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -11,30 +12,42 @@ class ScheduleController extends Controller
 {
     public function index()
     {
-        $schedules = Schedule::with('destination')->orderBy('is_active', 'desc')->orderBy('departure_time', 'asc')->paginate(10);
+        $schedules = Schedule::with('destination', 'speedboat')->orderBy('is_active', 'desc')->orderBy('departure_time', 'asc')->paginate(10);
         return view('schedules.index', compact('schedules'));
     }
 
     public function create()
     {
         $destinations = Destination::where('is_active', true)->get();
-        return view('schedules.create', compact('destinations'));
+        $speedboats = Speedboat::where('is_active', true)->get();
+        return view('schedules.create', compact('destinations', 'speedboats'));
     }
 
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'destination_id' => 'required|exists:destinations,id',
+            'speedboat_id' => 'required|exists:speedboats,id',
             'name' => 'required|string|max:255',
             'departure_time' => 'required',
             'capacity' => 'required|integer|min:1'
         ]);
 
+        // Add custom validation for capacity not exceeding speedboat capacity
+        $validator->after(function ($validator) use ($request) {
+            if ($request->speedboat_id && $request->capacity) {
+                $speedboat = Speedboat::find($request->speedboat_id);
+                if ($speedboat && $request->capacity > $speedboat->capacity) {
+                    $validator->errors()->add('capacity', 'Kapasitas tidak boleh melebihi kapasitas speedboat (' . $speedboat->capacity . ' penumpang)');
+                }
+            }
+        });
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['destination_id', 'name', 'departure_time', 'capacity']);
+        $data = $request->only(['destination_id', 'speedboat_id', 'name', 'departure_time', 'capacity']);
         $data['is_active'] = $request->has('is_active');
         
         Schedule::create($data);
@@ -50,17 +63,29 @@ class ScheduleController extends Controller
     public function edit(Schedule $schedule)
     {
         $destinations = Destination::where('is_active', true)->get();
-        return view('schedules.edit', compact('schedule', 'destinations'));
+        $speedboats = Speedboat::where('is_active', true)->get();
+        return view('schedules.edit', compact('schedule', 'destinations', 'speedboats'));
     }
 
     public function update(Request $request, Schedule $schedule)
     {
         $validator = Validator::make($request->all(), [
             'destination_id' => 'required|exists:destinations,id',
+            'speedboat_id' => 'required|exists:speedboats,id',
             'name' => 'required|string|max:255',
             'departure_time' => 'required',
             'capacity' => 'required|integer|min:1'
         ]);
+
+        // Add custom validation for capacity not exceeding speedboat capacity
+        $validator->after(function ($validator) use ($request) {
+            if ($request->speedboat_id && $request->capacity) {
+                $speedboat = Speedboat::find($request->speedboat_id);
+                if ($speedboat && $request->capacity > $speedboat->capacity) {
+                    $validator->errors()->add('capacity', 'Kapasitas tidak boleh melebihi kapasitas speedboat (' . $speedboat->capacity . ' penumpang)');
+                }
+            }
+        });
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
@@ -69,6 +94,7 @@ class ScheduleController extends Controller
         // Update the schedule
         $schedule->update([
             'destination_id' => $request->destination_id,
+            'speedboat_id' => $request->speedboat_id,
             'name' => $request->name,
             'departure_time' => $request->departure_time,
             'capacity' => $request->capacity,

@@ -51,24 +51,36 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Nama Jadwal -->
+                    <!-- Speedboat -->
                     <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label for="speedboat_search" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                             </svg>
-                            Nama Jadwal
+                            Speedboat
                         </label>
-                        <input type="text" 
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('name') border-red-500 @enderror" 
-                               id="name" 
-                               name="name" 
-                               value="{{ old('name') }}"
-                               placeholder="Contoh: Jadwal Pagi, Jadwal Siang"
-                               required>
-                        @error('name')
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                            <input type="text" 
+                                   class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('speedboat_id') border-red-500 @enderror" 
+                                   id="speedboat_search" 
+                                   placeholder="Ketik untuk mencari speedboat..."
+                                   autocomplete="off">
+                            <input type="hidden" id="speedboat_id" name="speedboat_id" value="{{ old('speedboat_id') }}" required>
+                            
+                            <!-- Dropdown hasil pencarian -->
+                            <div id="speedboat_dropdown" class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg hidden max-h-60 overflow-y-auto">
+                                <!-- Hasil akan dimuat di sini -->
+                            </div>
+                        </div>
+                        @error('speedboat_id')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
+                        <input type="hidden" id="name" name="name" value="">
                     </div>
                     
                     <!-- Waktu Keberangkatan -->
@@ -99,6 +111,23 @@
                         </svg>
                         Kapasitas Penumpang
                     </label>
+                    
+                    <!-- Checkbox untuk menggunakan kapasitas maksimal speedboat -->
+                    <div class="mb-3" id="maxCapacityOption" style="display: none;">
+                        <div class="flex items-center">
+                            <input class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded" 
+                                   type="checkbox" 
+                                   id="use_max_capacity" 
+                                   name="use_max_capacity">
+                            <label class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300" for="use_max_capacity">
+                                <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Gunakan kapasitas maksimal speedboat (<span id="speedboat-max-capacity">-</span> penumpang)
+                            </label>
+                        </div>
+                    </div>
+
                     <input type="number" 
                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('capacity') border-red-500 @enderror" 
                            id="capacity" 
@@ -106,7 +135,27 @@
                            value="{{ old('capacity', 50) }}"
                            placeholder="50"
                            min="1"
+                           max=""
                            required>
+                    
+                    <!-- Info kapasitas speedboat -->
+                    <div class="mt-2 text-sm text-gray-600 dark:text-gray-400 hidden" id="capacity-info">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Kapasitas maksimal speedboat: <span id="max-capacity-display">-</span> penumpang
+                        </div>
+                    </div>
+                    
+                    <!-- Error message untuk kapasitas melebihi maksimal -->
+                    <div class="mt-1 text-sm text-red-600 dark:text-red-400 hidden" id="capacity-error">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        Kapasitas tidak boleh melebihi kapasitas maksimal speedboat
+                    </div>
+                    
                     @error('capacity')
                         <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                     @enderror
@@ -196,12 +245,31 @@
         @endforeach
     ];
 
+    const speedboats = [
+        @foreach($speedboats as $speedboat)
+        {
+            id: {{ $speedboat->id }},
+            code: @json($speedboat->code),
+            name: @json($speedboat->name),
+            type: @json($speedboat->type),
+            capacity: {{ $speedboat->capacity }},
+            display: @json($speedboat->name . ' (' . $speedboat->code . ') - ' . $speedboat->type . ' - Kapasitas: ' . $speedboat->capacity)
+        },
+        @endforeach
+    ];
+
     const searchInput = document.getElementById('destination_search');
     const hiddenInput = document.getElementById('destination_id');
     const dropdown = document.getElementById('destination_dropdown');
     const pricePreview = document.getElementById('price-preview');
     
+    const speedboatSearchInput = document.getElementById('speedboat_search');
+    const speedboatHiddenInput = document.getElementById('speedboat_id');
+    const speedboatDropdown = document.getElementById('speedboat_dropdown');
+    const nameHiddenInput = document.getElementById('name');
+    
     let selectedDestination = null;
+    let selectedSpeedboat = null;
 
     // Set initial value if editing
     const initialId = hiddenInput.value;
@@ -211,6 +279,18 @@
             searchInput.value = initial.display;
             selectedDestination = initial;
             updatePricePreview(initial);
+        }
+    }
+
+    // Set initial speedboat value if editing
+    const initialSpeedboatId = speedboatHiddenInput.value;
+    if (initialSpeedboatId) {
+        const initialSpeedboat = speedboats.find(s => s.id == initialSpeedboatId);
+        if (initialSpeedboat) {
+            speedboatSearchInput.value = initialSpeedboat.display;
+            selectedSpeedboat = initialSpeedboat;
+            nameHiddenInput.value = initialSpeedboat.name;
+            updateCapacityConstraints(initialSpeedboat);
         }
     }
 
@@ -256,6 +336,146 @@
             dropdown.classList.add('hidden');
         }, 200);
     });
+
+    // Speedboat search functionality
+    speedboatSearchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase();
+        
+        if (query.length < 1) {
+            speedboatDropdown.classList.add('hidden');
+            speedboatHiddenInput.value = '';
+            selectedSpeedboat = null;
+            nameHiddenInput.value = '';
+            validateForm();
+            return;
+        }
+
+        const filteredSpeedboats = speedboats.filter(speedboat => 
+            speedboat.name.toLowerCase().includes(query) || 
+            speedboat.code.toLowerCase().includes(query) ||
+            speedboat.type.toLowerCase().includes(query) ||
+            speedboat.display.toLowerCase().includes(query)
+        );
+
+        renderSpeedboatDropdown(filteredSpeedboats);
+        validateForm();
+    });
+
+    speedboatSearchInput.addEventListener('focus', function() {
+        if (this.value.length >= 1) {
+            const query = this.value.toLowerCase();
+            const filteredSpeedboats = speedboats.filter(speedboat => 
+                speedboat.name.toLowerCase().includes(query) || 
+                speedboat.code.toLowerCase().includes(query) ||
+                speedboat.type.toLowerCase().includes(query) ||
+                speedboat.display.toLowerCase().includes(query)
+            );
+            renderSpeedboatDropdown(filteredSpeedboats);
+        }
+    });
+
+    speedboatSearchInput.addEventListener('blur', function() {
+        // Delay hiding to allow click on dropdown
+        setTimeout(() => {
+            speedboatDropdown.classList.add('hidden');
+        }, 200);
+    });
+
+    function renderSpeedboatDropdown(filteredSpeedboats) {
+        if (filteredSpeedboats.length === 0) {
+            speedboatDropdown.innerHTML = '<div class="px-4 py-2 text-gray-500 dark:text-gray-400">Tidak ada speedboat ditemukan</div>';
+        } else {
+            speedboatDropdown.innerHTML = filteredSpeedboats.map(speedboat => `
+                <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0" 
+                     onclick="selectSpeedboat(${speedboat.id}, '${speedboat.display}', '${speedboat.name}')">
+                    <div class="flex items-center">
+                        <span class="inline-block bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 px-2 py-1 rounded text-xs font-medium mr-2">
+                            ${speedboat.code}
+                        </span>
+                        <span class="text-gray-900 dark:text-white font-medium">${speedboat.name}</span>
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        ${speedboat.type} | Kapasitas: ${speedboat.capacity} penumpang
+                    </div>
+                </div>
+            `).join('');
+        }
+        speedboatDropdown.classList.remove('hidden');
+    }
+
+    function selectSpeedboat(id, display, name) {
+        speedboatSearchInput.value = display;
+        speedboatHiddenInput.value = id;
+        const speedboat = speedboats.find(s => s.id == id);
+        selectedSpeedboat = speedboat;
+        speedboatDropdown.classList.add('hidden');
+        nameHiddenInput.value = name;
+        
+        // Update capacity constraints based on selected speedboat
+        updateCapacityConstraints(speedboat);
+        
+        validateForm();
+    }
+
+    function updateCapacityConstraints(speedboat) {
+        const capacityInput = document.getElementById('capacity');
+        const maxCapacityOption = document.getElementById('maxCapacityOption');
+        const speedboatMaxCapacity = document.getElementById('speedboat-max-capacity');
+        const capacityInfo = document.getElementById('capacity-info');
+        const maxCapacityDisplay = document.getElementById('max-capacity-display');
+        const useMaxCapacityCheckbox = document.getElementById('use_max_capacity');
+
+        if (speedboat) {
+            // Set max attribute and show capacity info
+            capacityInput.setAttribute('max', speedboat.capacity);
+            speedboatMaxCapacity.textContent = speedboat.capacity;
+            maxCapacityDisplay.textContent = speedboat.capacity;
+            
+            // Show max capacity option and info
+            maxCapacityOption.style.display = 'block';
+            capacityInfo.classList.remove('hidden');
+            
+            // Reset checkbox
+            useMaxCapacityCheckbox.checked = false;
+        } else {
+            // Hide max capacity option and info
+            maxCapacityOption.style.display = 'none';
+            capacityInfo.classList.add('hidden');
+            capacityInput.removeAttribute('max');
+        }
+
+        // Validate current capacity value
+        validateCapacity();
+    }
+
+    function validateCapacity() {
+        const capacityInput = document.getElementById('capacity');
+        const capacityError = document.getElementById('capacity-error');
+        const useMaxCapacityCheckbox = document.getElementById('use_max_capacity');
+        
+        // Get current capacity value, force reread from input
+        const currentCapacity = parseInt(capacityInput.value) || 0;
+        
+        // If checkbox is checked, capacity should always be valid since it's set to speedboat max
+        if (useMaxCapacityCheckbox && useMaxCapacityCheckbox.checked && selectedSpeedboat) {
+            capacityError.classList.add('hidden');
+            capacityInput.classList.remove('border-red-500');
+            capacityInput.classList.add('border-gray-300', 'dark:border-gray-600');
+            return true;
+        }
+        
+        if (selectedSpeedboat && currentCapacity > selectedSpeedboat.capacity) {
+            capacityError.classList.remove('hidden');
+            capacityInput.classList.add('border-red-500');
+            capacityInput.classList.remove('border-gray-300', 'dark:border-gray-600');
+            return false;
+        } else {
+            capacityError.classList.add('hidden');
+            capacityInput.classList.remove('border-red-500');
+            capacityInput.classList.add('border-gray-300', 'dark:border-gray-600');
+            return true;
+        }
+    }
 
     function renderDropdown(filteredDestinations) {
         if (filteredDestinations.length === 0) {
@@ -306,17 +526,24 @@
     // Form validation function
     function validateForm() {
         const destinationId = document.getElementById('destination_id').value;
+        const speedboatId = document.getElementById('speedboat_id').value;
         const name = document.getElementById('name').value.trim();
         const departureTime = document.getElementById('departure_time').value;
-        const capacity = document.getElementById('capacity').value;
+        const capacityInput = document.getElementById('capacity');
+        const capacity = capacityInput.value;
         const submitBtn = document.getElementById('submitBtn');
+        
+        // Validate capacity against speedboat limit
+        const isCapacityValid = validateCapacity();
         
         // Check if all required fields are filled
         const isValid = destinationId !== '' && 
+                       speedboatId !== '' &&
                        name !== '' && 
                        departureTime !== '' && 
                        capacity !== '' && 
-                       parseInt(capacity) > 0;
+                       parseInt(capacity) > 0 &&
+                       isCapacityValid;
         
         if (isValid) {
             // Enable button and make it blue
@@ -332,9 +559,38 @@
     }
 
     // Add event listeners for form validation
-    document.getElementById('name').addEventListener('input', validateForm);
     document.getElementById('departure_time').addEventListener('input', validateForm);
-    document.getElementById('capacity').addEventListener('input', validateForm);
+    document.getElementById('capacity').addEventListener('input', function() {
+        validateCapacity();
+        validateForm();
+    });
+
+    // Add event listener for max capacity checkbox
+    document.getElementById('use_max_capacity').addEventListener('change', function() {
+        const capacityInput = document.getElementById('capacity');
+        
+        if (this.checked && selectedSpeedboat) {
+            capacityInput.value = selectedSpeedboat.capacity;
+            capacityInput.readOnly = true;
+            capacityInput.classList.add('bg-gray-100', 'dark:bg-gray-600', 'cursor-not-allowed');
+            // Add readonly styling
+            capacityInput.style.pointerEvents = 'none';
+            capacityInput.style.userSelect = 'none';
+        } else {
+            capacityInput.readOnly = false;
+            capacityInput.classList.remove('bg-gray-100', 'dark:bg-gray-600', 'cursor-not-allowed');
+            // Remove readonly styling
+            capacityInput.style.pointerEvents = '';
+            capacityInput.style.userSelect = '';
+        }
+        
+        // Force trigger input event to ensure validation uses the new value
+        capacityInput.dispatchEvent(new Event('input', { bubbles: true }));
+        
+        // Additional validation calls
+        validateCapacity();
+        validateForm();
+    });
     
     // Initial form validation
     validateForm();
@@ -343,6 +599,9 @@
     document.addEventListener('click', function(e) {
         if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
             dropdown.classList.add('hidden');
+        }
+        if (!speedboatSearchInput.contains(e.target) && !speedboatDropdown.contains(e.target)) {
+            speedboatDropdown.classList.add('hidden');
         }
     });
 </script>
