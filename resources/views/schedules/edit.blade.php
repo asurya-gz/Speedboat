@@ -104,6 +104,89 @@
                     </div>
                 </div>
 
+                <!-- Konfigurasi Layout Kursi -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+                    <h4 class="font-semibold text-blue-800 dark:text-blue-200 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                        </svg>
+                        Layout Kursi
+                    </h4>
+
+                    <div class="mb-4">
+                        <label for="columns" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Kursi per Baris (Menyamping)
+                        </label>
+                        <input type="number"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                               id="columns"
+                               name="columns"
+                               value="{{ old('columns', $schedule->columns ?? 4) }}"
+                               min="1"
+                               max="10"
+                               onchange="calculateRowsAndGenerateLayout()"
+                               required>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Jumlah kursi menyamping dari kiri ke kanan</p>
+                    </div>
+
+                    <div class="bg-gray-50 dark:bg-gray-600 rounded px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
+                        <strong>Jumlah Baris (Otomatis):</strong> <span id="rows_display">-</span>
+                        <input type="hidden" id="rows" name="rows" value="{{ old('rows', $schedule->rows ?? 5) }}">
+                    </div>
+
+                    <!-- Preview Layout Kursi -->
+                    <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                        <h5 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            Preview Layout Kursi
+                        </h5>
+                        <div id="seatLayoutPreview" class="text-center">
+                            <!-- Preview akan di-generate di sini -->
+                        </div>
+                        <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                            <p>💡 Klik nomor kursi untuk mengubahnya. Nomor default: A1, A2, B1, B2, dst.</p>
+                        </div>
+                    </div>
+
+                    <!-- Hidden input untuk menyimpan seat numbers -->
+                    <input type="hidden" id="seat_numbers" name="seat_numbers" value="">
+                </div>
+
+                <!-- Modal Edit Seat Number -->
+                <div id="editSeatModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
+                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Nomor Kursi</h3>
+                        </div>
+                        <div class="p-6">
+                            <label for="seatNumberInput" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Nomor Kursi Baru
+                            </label>
+                            <input type="text"
+                                   id="seatNumberInput"
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                                   placeholder="Contoh: A1, B2, VIP1">
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Masukkan nomor kursi yang unik</p>
+                            <p id="seatErrorMsg" class="mt-2 text-xs text-red-600 dark:text-red-400 hidden"></p>
+                        </div>
+                        <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 rounded-b-lg flex justify-end space-x-3">
+                            <button type="button"
+                                    onclick="closeSeatModal()"
+                                    class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-500">
+                                Batal
+                            </button>
+                            <button type="button"
+                                    onclick="saveSeatNumber()"
+                                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                                Simpan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Kapasitas -->
                 <div>
                     <label for="capacity" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -112,13 +195,13 @@
                         </svg>
                         Kapasitas Penumpang
                     </label>
-                    
+
                     <!-- Checkbox untuk menggunakan kapasitas maksimal speedboat -->
                     <div class="mb-3" id="maxCapacityOption" style="display: none;">
                         <div class="flex items-center">
-                            <input class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded" 
-                                   type="checkbox" 
-                                   id="use_max_capacity" 
+                            <input class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded"
+                                   type="checkbox"
+                                   id="use_max_capacity"
                                    name="use_max_capacity">
                             <label class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300" for="use_max_capacity">
                                 <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,14 +212,15 @@
                         </div>
                     </div>
 
-                    <input type="number" 
-                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('capacity') border-red-500 @enderror" 
-                           id="capacity" 
-                           name="capacity" 
+                    <input type="number"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('capacity') border-red-500 @enderror"
+                           id="capacity"
+                           name="capacity"
                            value="{{ old('capacity', $schedule->capacity) }}"
                            placeholder="50"
                            min="1"
                            max=""
+                           onchange="calculateRowsAndGenerateLayout()"
                            required>
                     
                     <!-- Info kapasitas speedboat -->
@@ -259,18 +343,22 @@
         @endforeach
     ];
 
-    const searchInput = document.getElementById('destination_search');
-    const hiddenInput = document.getElementById('destination_id');
-    const dropdown = document.getElementById('destination_dropdown');
-    const pricePreview = document.getElementById('price-preview');
-    
-    const speedboatSearchInput = document.getElementById('speedboat_search');
-    const speedboatHiddenInput = document.getElementById('speedboat_id');
-    const speedboatDropdown = document.getElementById('speedboat_dropdown');
-    const nameHiddenInput = document.getElementById('name');
-    
-    let selectedDestination = null;
-    let selectedSpeedboat = null;
+// Global variables for dropdown functionality
+let searchInput, hiddenInput, dropdown, pricePreview;
+let speedboatSearchInput, speedboatHiddenInput, speedboatDropdown, nameHiddenInput;
+let selectedDestination = null;
+let selectedSpeedboat = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    searchInput = document.getElementById('destination_search');
+    hiddenInput = document.getElementById('destination_id');
+    dropdown = document.getElementById('destination_dropdown');
+    pricePreview = document.getElementById('price-preview');
+
+    speedboatSearchInput = document.getElementById('speedboat_search');
+    speedboatHiddenInput = document.getElementById('speedboat_id');
+    speedboatDropdown = document.getElementById('speedboat_dropdown');
+    nameHiddenInput = document.getElementById('name');
 
     // Set initial value if editing
     const initialId = hiddenInput.value;
@@ -291,6 +379,7 @@
             speedboatSearchInput.value = initialSpeedboat.display;
             selectedSpeedboat = initialSpeedboat;
             nameHiddenInput.value = initialSpeedboat.name;
+            updateCapacityConstraints(initialSpeedboat);
         }
     }
 
@@ -386,7 +475,7 @@
             speedboatDropdown.innerHTML = '<div class="px-4 py-2 text-gray-500 dark:text-gray-400">Tidak ada speedboat ditemukan</div>';
         } else {
             speedboatDropdown.innerHTML = filteredSpeedboats.map(speedboat => `
-                <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0" 
+                <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0"
                      onclick="selectSpeedboat(${speedboat.id}, '${speedboat.display}', '${speedboat.name}')">
                     <div class="flex items-center">
                         <span class="inline-block bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300 px-2 py-1 rounded text-xs font-medium mr-2">
@@ -403,86 +492,12 @@
         speedboatDropdown.classList.remove('hidden');
     }
 
-    function selectSpeedboat(id, display, name) {
-        speedboatSearchInput.value = display;
-        speedboatHiddenInput.value = id;
-        const speedboat = speedboats.find(s => s.id == id);
-        selectedSpeedboat = speedboat;
-        speedboatDropdown.classList.add('hidden');
-        nameHiddenInput.value = name;
-        
-        // Update capacity constraints based on selected speedboat
-        updateCapacityConstraints(speedboat);
-        
-        validateForm();
-    }
-
-    function updateCapacityConstraints(speedboat) {
-        const capacityInput = document.getElementById('capacity');
-        const maxCapacityOption = document.getElementById('maxCapacityOption');
-        const speedboatMaxCapacity = document.getElementById('speedboat-max-capacity');
-        const capacityInfo = document.getElementById('capacity-info');
-        const maxCapacityDisplay = document.getElementById('max-capacity-display');
-        const useMaxCapacityCheckbox = document.getElementById('use_max_capacity');
-
-        if (speedboat) {
-            // Set max attribute and show capacity info
-            capacityInput.setAttribute('max', speedboat.capacity);
-            speedboatMaxCapacity.textContent = speedboat.capacity;
-            maxCapacityDisplay.textContent = speedboat.capacity;
-            
-            // Show max capacity option and info
-            maxCapacityOption.style.display = 'block';
-            capacityInfo.classList.remove('hidden');
-            
-            // Reset checkbox
-            useMaxCapacityCheckbox.checked = false;
-        } else {
-            // Hide max capacity option and info
-            maxCapacityOption.style.display = 'none';
-            capacityInfo.classList.add('hidden');
-            capacityInput.removeAttribute('max');
-        }
-
-        // Validate current capacity value
-        validateCapacity();
-    }
-
-    function validateCapacity() {
-        const capacityInput = document.getElementById('capacity');
-        const capacityError = document.getElementById('capacity-error');
-        const useMaxCapacityCheckbox = document.getElementById('use_max_capacity');
-        
-        // Get current capacity value, force reread from input
-        const currentCapacity = parseInt(capacityInput.value) || 0;
-        
-        // If checkbox is checked, capacity should always be valid since it's set to speedboat max
-        if (useMaxCapacityCheckbox && useMaxCapacityCheckbox.checked && selectedSpeedboat) {
-            capacityError.classList.add('hidden');
-            capacityInput.classList.remove('border-red-500');
-            capacityInput.classList.add('border-gray-300', 'dark:border-gray-600');
-            return true;
-        }
-        
-        if (selectedSpeedboat && currentCapacity > selectedSpeedboat.capacity) {
-            capacityError.classList.remove('hidden');
-            capacityInput.classList.add('border-red-500');
-            capacityInput.classList.remove('border-gray-300', 'dark:border-gray-600');
-            return false;
-        } else {
-            capacityError.classList.add('hidden');
-            capacityInput.classList.remove('border-red-500');
-            capacityInput.classList.add('border-gray-300', 'dark:border-gray-600');
-            return true;
-        }
-    }
-
     function renderDropdown(filteredDestinations) {
         if (filteredDestinations.length === 0) {
             dropdown.innerHTML = '<div class="px-4 py-2 text-gray-500 dark:text-gray-400">Tidak ada destinasi ditemukan</div>';
         } else {
             dropdown.innerHTML = filteredDestinations.map(destination => `
-                <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0" 
+                <div class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0"
                      onclick="selectDestination(${destination.id}, '${destination.display}', ${destination.adult_price}, ${destination.toddler_price})">
                     <div class="flex items-center">
                         <span class="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium mr-2">
@@ -491,7 +506,7 @@
                         <span class="text-gray-900 dark:text-white">${destination.departure_location} → ${destination.destination_location}</span>
                     </div>
                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Dewasa: Rp ${new Intl.NumberFormat('id-ID').format(destination.adult_price)} | 
+                        Dewasa: Rp ${new Intl.NumberFormat('id-ID').format(destination.adult_price)} |
                         Balita: Rp ${new Intl.NumberFormat('id-ID').format(destination.toddler_price)}
                     </div>
                 </div>
@@ -500,75 +515,18 @@
         dropdown.classList.remove('hidden');
     }
 
-    function selectDestination(id, display, adultPrice, toddlerPrice) {
-        searchInput.value = display;
-        hiddenInput.value = id;
-        selectedDestination = { id, display, adult_price: adultPrice, toddler_price: toddlerPrice };
-        dropdown.classList.add('hidden');
-        
-        updatePricePreview({ adult_price: adultPrice, toddler_price: toddlerPrice });
-        validateForm();
-    }
-
-    function updatePricePreview(destination) {
-        if (destination) {
-            document.getElementById('adult-price').textContent = 'Rp ' + 
-                new Intl.NumberFormat('id-ID').format(destination.adult_price);
-            document.getElementById('toddler-price').textContent = 'Rp ' + 
-                new Intl.NumberFormat('id-ID').format(destination.toddler_price);
-            
-            pricePreview.classList.remove('hidden');
-        } else {
-            pricePreview.classList.add('hidden');
-        }
-    }
-
-    // Form validation function
-    function validateForm() {
-        const destinationId = document.getElementById('destination_id').value;
-        const speedboatId = document.getElementById('speedboat_id').value;
-        const name = document.getElementById('name').value.trim();
-        const departureTime = document.getElementById('departure_time').value;
-        const capacityInput = document.getElementById('capacity');
-        const capacity = capacityInput.value;
-        const submitBtn = document.getElementById('submitBtn');
-        
-        // Validate capacity against speedboat limit
-        const isCapacityValid = validateCapacity();
-        
-        // Check if all required fields are filled
-        const isValid = destinationId !== '' && 
-                       speedboatId !== '' &&
-                       name !== '' && 
-                       departureTime !== '' && 
-                       capacity !== '' && 
-                       parseInt(capacity) > 0 &&
-                       isCapacityValid;
-        
-        if (isValid) {
-            // Enable button and make it blue
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
-            submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-        } else {
-            // Disable button and make it gray
-            submitBtn.disabled = true;
-            submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
-        }
-    }
-
     // Add event listeners for form validation
     document.getElementById('departure_time').addEventListener('input', validateForm);
     document.getElementById('capacity').addEventListener('input', function() {
         validateCapacity();
         validateForm();
+        calculateRowsAndGenerateLayout();
     });
 
     // Add event listener for max capacity checkbox
     document.getElementById('use_max_capacity').addEventListener('change', function() {
         const capacityInput = document.getElementById('capacity');
-        
+
         if (this.checked && selectedSpeedboat) {
             capacityInput.value = selectedSpeedboat.capacity;
             capacityInput.readOnly = true;
@@ -583,17 +541,14 @@
             capacityInput.style.pointerEvents = '';
             capacityInput.style.userSelect = '';
         }
-        
-        // Force trigger input event to ensure validation uses the new value
-        capacityInput.dispatchEvent(new Event('input', { bubbles: true }));
-        
+
+        // Recalculate layout when capacity changes
+        calculateRowsAndGenerateLayout();
+
         // Additional validation calls
         validateCapacity();
         validateForm();
     });
-    
-    // Initial form validation
-    validateForm();
 
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
@@ -604,6 +559,375 @@
             speedboatDropdown.classList.add('hidden');
         }
     });
+
+    // Initial form validation
+    validateForm();
+
+    // Generate initial seat layout after DOM is ready
+    setTimeout(function() {
+        if (typeof calculateRowsAndGenerateLayout === 'function') {
+            // Initialize from existing schedule data if available
+            @if(isset($schedule->seat_numbers))
+            try {
+                const existingSeatNumbers = @json($schedule->seat_numbers);
+                if (typeof existingSeatNumbers === 'object' && existingSeatNumbers !== null) {
+                    seatNumbers = existingSeatNumbers;
+                    const rows = parseInt(document.getElementById('rows').value) || 5;
+                    const columns = parseInt(document.getElementById('columns').value) || 4;
+                    const capacity = parseInt(document.getElementById('capacity').value) || 0;
+                    renderSeatLayoutPreview(rows, columns, capacity);
+                    updateSeatNumbersInput();
+                } else {
+                    calculateRowsAndGenerateLayout();
+                }
+            } catch (e) {
+                calculateRowsAndGenerateLayout();
+            }
+            @else
+            calculateRowsAndGenerateLayout();
+            @endif
+        }
+    }, 100);
+}); // End of DOMContentLoaded
+
+// Global functions for onclick handlers
+function selectDestination(id, display, adultPrice, toddlerPrice) {
+    searchInput.value = display;
+    hiddenInput.value = id;
+    selectedDestination = { id, display, adult_price: adultPrice, toddler_price: toddlerPrice };
+    dropdown.classList.add('hidden');
+
+    updatePricePreview({ adult_price: adultPrice, toddler_price: toddlerPrice });
+    validateForm();
+}
+
+function selectSpeedboat(id, display, name) {
+    speedboatSearchInput.value = display;
+    speedboatHiddenInput.value = id;
+    const speedboat = speedboats.find(s => s.id == id);
+    selectedSpeedboat = speedboat;
+    speedboatDropdown.classList.add('hidden');
+    nameHiddenInput.value = name;
+
+    // Update capacity constraints based on selected speedboat
+    updateCapacityConstraints(speedboat);
+
+    // DO NOT auto-check checkbox for edit page (only for create)
+
+    validateForm();
+}
+
+function updatePricePreview(destination) {
+    if (destination) {
+        document.getElementById('adult-price').textContent = 'Rp ' +
+            new Intl.NumberFormat('id-ID').format(destination.adult_price);
+        document.getElementById('toddler-price').textContent = 'Rp ' +
+            new Intl.NumberFormat('id-ID').format(destination.toddler_price);
+
+        pricePreview.classList.remove('hidden');
+    } else {
+        pricePreview.classList.add('hidden');
+    }
+}
+
+function updateCapacityConstraints(speedboat) {
+    const capacityInput = document.getElementById('capacity');
+    const maxCapacityOption = document.getElementById('maxCapacityOption');
+    const speedboatMaxCapacity = document.getElementById('speedboat-max-capacity');
+    const capacityInfo = document.getElementById('capacity-info');
+    const maxCapacityDisplay = document.getElementById('max-capacity-display');
+
+    if (speedboat) {
+        // Set max attribute and show capacity info
+        capacityInput.setAttribute('max', speedboat.capacity);
+        speedboatMaxCapacity.textContent = speedboat.capacity;
+        maxCapacityDisplay.textContent = speedboat.capacity;
+
+        // Show max capacity option and info
+        maxCapacityOption.style.display = 'block';
+        capacityInfo.classList.remove('hidden');
+    } else {
+        // Hide max capacity option and info
+        maxCapacityOption.style.display = 'none';
+        capacityInfo.classList.add('hidden');
+        capacityInput.removeAttribute('max');
+    }
+
+    // Validate current capacity value
+    validateCapacity();
+}
+
+function validateCapacity() {
+    const capacityInput = document.getElementById('capacity');
+    const capacityError = document.getElementById('capacity-error');
+    const useMaxCapacityCheckbox = document.getElementById('use_max_capacity');
+
+    // Get current capacity value, force reread from input
+    const currentCapacity = parseInt(capacityInput.value) || 0;
+
+    // If checkbox is checked, capacity should always be valid since it's set to speedboat max
+    if (useMaxCapacityCheckbox && useMaxCapacityCheckbox.checked && selectedSpeedboat) {
+        capacityError.classList.add('hidden');
+        capacityInput.classList.remove('border-red-500');
+        capacityInput.classList.add('border-gray-300', 'dark:border-gray-600');
+        return true;
+    }
+
+    if (selectedSpeedboat && currentCapacity > selectedSpeedboat.capacity) {
+        capacityError.classList.remove('hidden');
+        capacityInput.classList.add('border-red-500');
+        capacityInput.classList.remove('border-gray-300', 'dark:border-gray-600');
+        return false;
+    } else {
+        capacityError.classList.add('hidden');
+        capacityInput.classList.remove('border-red-500');
+        capacityInput.classList.add('border-gray-300', 'dark:border-gray-600');
+        return true;
+    }
+}
+
+function validateForm() {
+    const destinationId = document.getElementById('destination_id').value;
+    const speedboatId = document.getElementById('speedboat_id').value;
+    const name = document.getElementById('name').value.trim();
+    const departureTime = document.getElementById('departure_time').value;
+    const capacityInput = document.getElementById('capacity');
+    const capacity = capacityInput.value;
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Validate capacity against speedboat limit
+    const isCapacityValid = validateCapacity();
+
+    // Check if all required fields are filled
+    const isValid = destinationId !== '' &&
+                   speedboatId !== '' &&
+                   name !== '' &&
+                   departureTime !== '' &&
+                   capacity !== '' &&
+                   parseInt(capacity) > 0 &&
+                   isCapacityValid;
+
+    if (isValid) {
+        // Enable button and make it blue
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+        submitBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+    } else {
+        // Disable button and make it gray
+        submitBtn.disabled = true;
+        submitBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        submitBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50');
+    }
+}
+
+// Seat layout management
+let seatNumbers = {};
+
+function calculateRowsAndGenerateLayout() {
+    const capacityInput = document.getElementById('capacity');
+    const columnsInput = document.getElementById('columns');
+    const rowsInput = document.getElementById('rows');
+    const rowsDisplay = document.getElementById('rows_display');
+
+    const capacity = parseInt(capacityInput.value) || 0;
+    const columns = parseInt(columnsInput.value) || 4;
+
+    // Calculate rows based on capacity and columns
+    const rows = Math.ceil(capacity / columns);
+
+    // Update hidden input and display
+    rowsInput.value = rows;
+    rowsDisplay.textContent = rows + ' baris';
+
+    // Generate seat layout
+    generateSeatLayout();
+}
+
+function generateSeatLayout() {
+    const rowsInput = document.getElementById('rows');
+    const columnsInput = document.getElementById('columns');
+    const capacityInput = document.getElementById('capacity');
+
+    const rows = parseInt(rowsInput.value) || 5;
+    const columns = parseInt(columnsInput.value) || 4;
+    const capacity = parseInt(capacityInput.value) || 0;
+
+    // Always regenerate seat numbers to match new layout
+    seatNumbers = {};
+    const seatLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    let seatCount = 0;
+    for (let row = 1; row <= rows; row++) {
+        for (let col = 0; col < columns; col++) {
+            if (seatCount >= capacity) break; // Stop if we reach capacity
+
+            const seatLabel = seatLabels[col % seatLabels.length];
+            const seatNumber = seatLabel + row;
+            const position = `${row}-${col}`;
+            seatNumbers[position] = seatNumber;
+            seatCount++;
+        }
+    }
+
+    // Generate preview
+    renderSeatLayoutPreview(rows, columns, capacity);
+
+    // Update hidden input
+    updateSeatNumbersInput();
+
+    // Validate capacity
+    validateCapacity();
+    validateForm();
+}
+
+function renderSeatLayoutPreview(rows, columns, capacity) {
+    const preview = document.getElementById('seatLayoutPreview');
+    let html = '<div class="inline-block">';
+
+    let seatCount = 0;
+    for (let row = 1; row <= rows; row++) {
+        html += '<div class="flex justify-center mb-2 space-x-2">';
+
+        for (let col = 0; col < columns; col++) {
+            const position = `${row}-${col}`;
+            const seatNumber = seatNumbers[position];
+
+            if (seatNumber) {
+                // Seat exists (within capacity)
+                html += `
+                    <button type="button"
+                            class="w-12 h-12 border-2 border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-semibold transition-colors duration-200"
+                            onclick="editSeatNumber('${position}')"
+                            title="Klik untuk edit nomor kursi">
+                        ${seatNumber}
+                    </button>
+                `;
+                seatCount++;
+            } else {
+                // Empty space (beyond capacity)
+                html += `
+                    <div class="w-12 h-12 border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg opacity-30"></div>
+                `;
+            }
+        }
+
+        html += '</div>';
+    }
+
+    html += '</div>';
+    html += `<div class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+        <strong>Total Kursi:</strong> ${Object.keys(seatNumbers).length} kursi (${rows} baris × ${columns} kolom)
+    </div>`;
+
+    preview.innerHTML = html;
+}
+
+let currentEditingPosition = null;
+
+function editSeatNumber(position) {
+    currentEditingPosition = position;
+    const currentNumber = seatNumbers[position] || '';
+
+    // Show modal
+    const modal = document.getElementById('editSeatModal');
+    const input = document.getElementById('seatNumberInput');
+    const errorMsg = document.getElementById('seatErrorMsg');
+
+    input.value = currentNumber;
+    errorMsg.classList.add('hidden');
+    modal.classList.remove('hidden');
+
+    // Focus input
+    setTimeout(() => {
+        input.focus();
+        input.select();
+    }, 100);
+}
+
+function closeSeatModal() {
+    const modal = document.getElementById('editSeatModal');
+    const errorMsg = document.getElementById('seatErrorMsg');
+
+    modal.classList.add('hidden');
+    errorMsg.classList.add('hidden');
+    currentEditingPosition = null;
+}
+
+function saveSeatNumber() {
+    const input = document.getElementById('seatNumberInput');
+    const errorMsg = document.getElementById('seatErrorMsg');
+    const newNumber = input.value.trim();
+
+    if (newNumber === '') {
+        errorMsg.textContent = 'Nomor kursi tidak boleh kosong!';
+        errorMsg.classList.remove('hidden');
+        return;
+    }
+
+    // Check if seat number already exists
+    const existingPosition = Object.keys(seatNumbers).find(
+        pos => pos !== currentEditingPosition && seatNumbers[pos] === newNumber
+    );
+
+    if (existingPosition) {
+        errorMsg.textContent = `Nomor kursi "${newNumber}" sudah digunakan!`;
+        errorMsg.classList.remove('hidden');
+        return;
+    }
+
+    // Save new seat number
+    seatNumbers[currentEditingPosition] = newNumber;
+
+    // Re-render preview
+    const rows = parseInt(document.getElementById('rows').value);
+    const columns = parseInt(document.getElementById('columns').value);
+    const capacity = parseInt(document.getElementById('capacity').value);
+    renderSeatLayoutPreview(rows, columns, capacity);
+
+    // Update hidden input
+    updateSeatNumbersInput();
+
+    // Close modal
+    closeSeatModal();
+}
+
+function updateSeatNumbersInput() {
+    const hiddenInput = document.getElementById('seat_numbers');
+    hiddenInput.value = JSON.stringify(seatNumbers);
+}
+
+// Handle Enter key in modal input
+document.addEventListener('DOMContentLoaded', function() {
+    const seatInput = document.getElementById('seatNumberInput');
+    if (seatInput) {
+        seatInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveSeatNumber();
+            }
+        });
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('editSeatModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                closeSeatModal();
+            }
+        }
+    });
+
+    // Close modal when clicking outside
+    const modal = document.getElementById('editSeatModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeSeatModal();
+            }
+        });
+    }
+});
 </script>
 @endpush
 @endsection

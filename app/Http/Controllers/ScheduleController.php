@@ -86,7 +86,10 @@ class ScheduleController extends Controller
             'speedboat_id' => 'required|exists:speedboats,id',
             'name' => 'required|string|max:255',
             'departure_time' => 'required',
-            'capacity' => 'required|integer|min:1'
+            'capacity' => 'required|integer|min:1',
+            'rows' => 'required|integer|min:1|max:20',
+            'columns' => 'required|integer|min:1|max:10',
+            'seat_numbers' => 'nullable|json'
         ]);
 
         // Add custom validation for capacity not exceeding speedboat capacity
@@ -97,15 +100,33 @@ class ScheduleController extends Controller
                     $validator->errors()->add('capacity', 'Kapasitas tidak boleh melebihi kapasitas speedboat (' . $speedboat->capacity . ' penumpang)');
                 }
             }
+
+            // Validate capacity is within acceptable range for rows * columns
+            if ($request->rows && $request->columns && $request->capacity) {
+                $maxCapacity = $request->rows * $request->columns;
+                $minCapacity = ($request->rows - 1) * $request->columns + 1;
+
+                if ($request->capacity > $maxCapacity) {
+                    $validator->errors()->add('capacity', 'Kapasitas tidak boleh lebih dari ' . $maxCapacity . ' (' . $request->rows . ' baris × ' . $request->columns . ' kolom)');
+                } elseif ($request->capacity < $minCapacity && $request->rows > 1) {
+                    $validator->errors()->add('capacity', 'Dengan ' . $request->columns . ' kolom, kapasitas ' . $request->capacity . ' hanya memerlukan ' . ceil($request->capacity / $request->columns) . ' baris');
+                }
+            }
         });
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['destination_id', 'speedboat_id', 'name', 'departure_time', 'capacity']);
+        $data = $request->only(['destination_id', 'speedboat_id', 'name', 'departure_time', 'capacity', 'rows', 'columns']);
         $data['is_active'] = $request->has('is_active');
-        
+
+        // Parse and store seat numbers
+        if ($request->filled('seat_numbers')) {
+            $seatNumbers = json_decode($request->seat_numbers, true);
+            $data['seat_numbers'] = $seatNumbers;
+        }
+
         Schedule::create($data);
         return redirect()->route('schedules.index')->with('success', 'Jadwal berhasil ditambahkan');
     }
@@ -130,7 +151,10 @@ class ScheduleController extends Controller
             'speedboat_id' => 'required|exists:speedboats,id',
             'name' => 'required|string|max:255',
             'departure_time' => 'required',
-            'capacity' => 'required|integer|min:1'
+            'capacity' => 'required|integer|min:1',
+            'rows' => 'required|integer|min:1|max:20',
+            'columns' => 'required|integer|min:1|max:10',
+            'seat_numbers' => 'nullable|json'
         ]);
 
         // Add custom validation for capacity not exceeding speedboat capacity
@@ -141,29 +165,60 @@ class ScheduleController extends Controller
                     $validator->errors()->add('capacity', 'Kapasitas tidak boleh melebihi kapasitas speedboat (' . $speedboat->capacity . ' penumpang)');
                 }
             }
+
+            // Validate capacity is within acceptable range for rows * columns
+            if ($request->rows && $request->columns && $request->capacity) {
+                $maxCapacity = $request->rows * $request->columns;
+                $minCapacity = ($request->rows - 1) * $request->columns + 1;
+
+                if ($request->capacity > $maxCapacity) {
+                    $validator->errors()->add('capacity', 'Kapasitas tidak boleh lebih dari ' . $maxCapacity . ' (' . $request->rows . ' baris × ' . $request->columns . ' kolom)');
+                } elseif ($request->capacity < $minCapacity && $request->rows > 1) {
+                    $validator->errors()->add('capacity', 'Dengan ' . $request->columns . ' kolom, kapasitas ' . $request->capacity . ' hanya memerlukan ' . ceil($request->capacity / $request->columns) . ' baris');
+                }
+            }
         });
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        // Update the schedule
-        $schedule->update([
+        // Prepare update data
+        $data = [
             'destination_id' => $request->destination_id,
             'speedboat_id' => $request->speedboat_id,
             'name' => $request->name,
             'departure_time' => $request->departure_time,
             'capacity' => $request->capacity,
+            'rows' => $request->rows,
+            'columns' => $request->columns,
             'is_active' => $request->has('is_active')
-        ]);
+        ];
+
+        // Parse and store seat numbers
+        if ($request->filled('seat_numbers')) {
+            $seatNumbers = json_decode($request->seat_numbers, true);
+            $data['seat_numbers'] = $seatNumbers;
+        }
+
+        // Update the schedule
+        $schedule->update($data);
 
         return redirect()->route('schedules.index')->with('success', 'Jadwal berhasil diupdate');
     }
 
     public function destroy(Schedule $schedule)
     {
-        $schedule->update(['is_active' => false]);
-        return redirect()->route('schedules.index')->with('success', 'Jadwal berhasil dihapus');
+        // Check if schedule has any transactions
+        if ($schedule->transactions()->count() > 0) {
+            return redirect()->route('schedules.index')
+                ->with('error', 'Jadwal tidak dapat dihapus karena sudah memiliki transaksi. Anda dapat menonaktifkan jadwal ini.');
+        }
+
+        // Delete the schedule
+        $schedule->delete();
+
+        return redirect()->route('schedules.index')->with('success', 'Jadwal berhasil dihapus dari database');
     }
 
     /**

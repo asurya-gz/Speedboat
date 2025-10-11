@@ -615,21 +615,27 @@ function loadSeatMap() {
 
 function generateSeatMapFromServer(seatLayout) {
     const seatMap = document.getElementById('seatMap');
-    
+
     let html = '<div class="mb-4"><h4 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Layout Kursi Speedboat</h4></div>';
     html += '<div class="max-w-md mx-auto">';
-    
+
     seatLayout.forEach(row => {
         html += '<div class="flex justify-center mb-2 space-x-2">';
-        
+
         row.forEach(seat => {
+            // Handle empty seats (for layout alignment)
+            if (seat.is_empty || !seat.seat_number) {
+                html += `<div class="w-10 h-10 border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg opacity-30"></div>`;
+                return;
+            }
+
             const seatNumber = seat.seat_number;
             const isAvailable = seat.is_available;
-            
+
             let buttonClass = 'seat-btn w-10 h-10 border-2 rounded-lg text-white text-xs font-semibold transition-colors duration-200';
             let clickHandler = '';
             let title = `Kursi ${seatNumber}`;
-            
+
             if (isAvailable) {
                 buttonClass += ' border-gray-300 bg-green-500 hover:bg-green-600';
                 clickHandler = `onclick="toggleSeat('${seatNumber}')"`;
@@ -638,29 +644,29 @@ function generateSeatMapFromServer(seatLayout) {
                 buttonClass += ' border-red-300 bg-red-500 cursor-not-allowed';
                 title += ' - Sudah dipesan';
             }
-            
-            html += `<button type="button" 
-                     class="${buttonClass}" 
-                     data-seat="${seatNumber}" 
+
+            html += `<button type="button"
+                     class="${buttonClass}"
+                     data-seat="${seatNumber}"
                      ${clickHandler}
                      title="${title}"
                      ${!isAvailable ? 'disabled' : ''}>
                      ${seatNumber}
                      </button>`;
         });
-        
+
         html += '</div>';
     });
-    
+
     html += '</div>';
-    
+
     // Add legend
     html += '<div class="mt-4 flex justify-center space-x-4 text-sm">';
     html += '<div class="flex items-center"><div class="w-4 h-4 bg-green-500 rounded mr-2"></div>Tersedia</div>';
     html += '<div class="flex items-center"><div class="w-4 h-4 bg-red-500 rounded mr-2"></div>Sudah dipesan</div>';
     html += '<div class="flex items-center"><div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>Dipilih</div>';
     html += '</div>';
-    
+
     seatMap.innerHTML = html;
 }
 

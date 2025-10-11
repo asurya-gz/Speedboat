@@ -46,21 +46,21 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Tanggal dan Waktu -->
+                    <!-- Nama Jadwal / Speedboat -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            Tanggal Keberangkatan
+                            Nama Jadwal
                         </label>
-                        <input type="text" 
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 cursor-not-allowed" 
-                               value="{{ $schedule->departure_date->format('d M Y') }} ({{ $schedule->departure_date->format('l') }})"
+                        <input type="text"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 cursor-not-allowed"
+                               value="{{ $schedule->name }}"
                                disabled
                                readonly>
                     </div>
-                    
+
                     <!-- Waktu Keberangkatan -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -75,6 +75,34 @@
                     </div>
                 </div>
 
+                <!-- Speedboat Info -->
+                @if($schedule->speedboat)
+                <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                    <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                        </svg>
+                        Informasi Speedboat
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Speedboat</label>
+                            <p class="text-sm text-gray-900 dark:text-white">{{ $schedule->speedboat->name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kode</label>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">
+                                {{ $schedule->speedboat->code }}
+                            </span>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe</label>
+                            <p class="text-sm text-gray-900 dark:text-white">{{ $schedule->speedboat->type }}</p>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Kapasitas -->
                     <div>
@@ -84,34 +112,47 @@
                             </svg>
                             Kapasitas Total
                         </label>
-                        <input type="text" 
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 cursor-not-allowed" 
+                        <input type="text"
+                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 cursor-not-allowed"
                                value="{{ $schedule->capacity }} penumpang"
                                disabled
                                readonly>
                     </div>
-                    
-                    <!-- Kursi Tersedia -->
+
+                    <!-- Total Transaksi -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             <svg class="w-4 h-4 inline text-green-600 dark:text-green-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            Kursi Tersedia
+                            Total Transaksi
                         </label>
-                        @php
-                            $percentage = ($schedule->available_seats / $schedule->capacity) * 100;
-                            $colorClass = $percentage > 50 ? 'green' : ($percentage > 20 ? 'yellow' : 'red');
-                        @endphp
-                        <div class="flex items-center space-x-3">
-                            <span class="text-lg font-semibold text-{{ $colorClass }}-600 dark:text-{{ $colorClass }}-400">{{ $schedule->available_seats }}</span>
-                            <div class="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-3">
-                                <div class="bg-{{ $colorClass }}-600 dark:bg-{{ $colorClass }}-500 h-3 rounded-full transition-all duration-300" style="width: {{ $percentage }}%"></div>
-                            </div>
-                            <span class="text-sm text-gray-500 dark:text-gray-400">{{ number_format($percentage, 1) }}%</span>
+                        <span class="inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">
+                            {{ $schedule->transactions->count() }} transaksi
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Layout Kursi -->
+                @if($schedule->seat_numbers)
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                    <h4 class="text-md font-semibold text-blue-900 dark:text-blue-200 mb-3 flex items-center">
+                        <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                        </svg>
+                        Layout Kursi Speedboat
+                    </h4>
+
+                    <div class="bg-white dark:bg-gray-700 rounded-lg p-4 text-center">
+                        <div id="seatLayoutDisplay" class="inline-block">
+                            <!-- Seat layout will be rendered here -->
+                        </div>
+                        <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                            <strong>Konfigurasi:</strong> {{ $schedule->rows }} baris × {{ $schedule->columns }} kolom = {{ $schedule->capacity }} kursi
                         </div>
                     </div>
                 </div>
+                @endif
 
                 <!-- Informasi Harga -->
                 <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
@@ -151,15 +192,9 @@
                         </svg>
                         <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mr-3">Status Jadwal:</label>
                         @if($schedule->is_active)
-                            @if($schedule->departure_date->isPast())
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
-                                    Selesai
-                                </span>
-                            @else
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-200 text-green-800 dark:text-green-800">
-                                    Aktif
-                                </span>
-                            @endif
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-200 text-green-800 dark:text-green-800">
+                                Aktif
+                            </span>
                         @else
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                                 Nonaktif
@@ -187,4 +222,57 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+@if($schedule->seat_numbers)
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const seatNumbers = @json($schedule->seat_numbers);
+    const rows = {{ $schedule->rows }};
+    const columns = {{ $schedule->columns }};
+    const capacity = {{ $schedule->capacity }};
+
+    renderSeatLayout(seatNumbers, rows, columns, capacity);
+});
+
+function renderSeatLayout(seatNumbers, rows, columns, capacity) {
+    const container = document.getElementById('seatLayoutDisplay');
+    if (!container) return;
+
+    let html = '<div class="inline-block">';
+
+    let seatCount = 0;
+    for (let row = 1; row <= rows; row++) {
+        html += '<div class="flex justify-center mb-2 space-x-2">';
+
+        for (let col = 0; col < columns; col++) {
+            const position = `${row}-${col}`;
+            const seatNumber = seatNumbers[position];
+
+            if (seatNumber) {
+                // Seat exists (within capacity)
+                html += `
+                    <div class="w-12 h-12 border-2 border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-900 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-semibold flex items-center justify-center">
+                        ${seatNumber}
+                    </div>
+                `;
+                seatCount++;
+            } else {
+                // Empty space (beyond capacity)
+                html += `
+                    <div class="w-12 h-12 border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg opacity-30"></div>
+                `;
+            }
+        }
+
+        html += '</div>';
+    }
+
+    html += '</div>';
+
+    container.innerHTML = html;
+}
+</script>
+@endif
+@endpush
 @endsection

@@ -15,13 +15,19 @@ class Schedule extends Model
         'name',
         'departure_time',
         'capacity',
-        'is_active'
+        'is_active',
+        'rows',
+        'columns',
+        'seat_numbers'
     ];
 
     protected $casts = [
         'departure_time' => 'datetime:H:i',
         'capacity' => 'integer',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'rows' => 'integer',
+        'columns' => 'integer',
+        'seat_numbers' => 'array'
     ];
 
     public function destination()
