@@ -12,6 +12,7 @@ class Transaction extends Model
     protected $fillable = [
         'transaction_code',
         'schedule_id',
+        'departure_date',
         'passenger_name',
         'adult_count',
         'child_count',
@@ -32,7 +33,8 @@ class Transaction extends Model
         'toddler_count' => 'integer',
         'total_amount' => 'decimal:2',
         'is_synced' => 'boolean',
-        'paid_at' => 'datetime'
+        'paid_at' => 'datetime',
+        'departure_date' => 'date'
     ];
 
     public function schedule()

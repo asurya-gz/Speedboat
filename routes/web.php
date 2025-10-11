@@ -79,10 +79,15 @@ Route::middleware(['auth', 'role'])->group(function () {
         Route::get('speedboats', [SpeedboatController::class, 'index'])->name('speedboats.index');
         Route::get('speedboats/{speedboat}', [SpeedboatController::class, 'show'])->name('speedboats.show');
         
+        // API routes first (more specific)
+        Route::get('transactions/filtered-schedules', [TransactionController::class, 'getFilteredSchedules'])->name('transactions.filtered-schedules');
+        Route::get('transactions/seat-map', [TransactionController::class, 'getSeatMap'])->name('transactions.seat-map');
+        Route::get('transactions/export/excel', [TransactionController::class, 'export'])->name('transactions.export');
+        
+        // Resource routes (less specific, should come after)
         Route::resource('transactions', TransactionController::class);
         Route::patch('transactions/{transaction}/confirm-payment', [TransactionController::class, 'confirmPayment'])->name('transactions.confirm-payment');
         Route::get('transactions/{transaction}/print', [TransactionController::class, 'printTickets'])->name('transactions.print');
-        Route::get('transactions/export/excel', [TransactionController::class, 'export'])->name('transactions.export');
     });
     
     // Schedules - read access for kasir, boarding, admin

@@ -17,6 +17,7 @@ class Ticket extends Model
         'price',
         'qr_code',
         'status',
+        'seat_number',
         'boarding_time',
         'validated_at',
         'validated_by',

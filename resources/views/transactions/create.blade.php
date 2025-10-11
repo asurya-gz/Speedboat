@@ -180,6 +180,61 @@ html.dark input, html.dark select, html.dark textarea {
         <form action="{{ route('transactions.store') }}" method="POST" class="p-6" id="ticketForm">
             @csrf
             
+            <!-- Filter Speedboat -->
+            <div class="mb-6">
+                <label for="speedboat_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Pilih Speedboat *
+                </label>
+                <select name="speedboat_id" id="speedboat_id" 
+                        class="form-select w-full" 
+                        required onchange="loadFilteredSchedules()">
+                    <option value="" selected>-- Pilih Speedboat --</option>
+                    @foreach($speedboats as $speedboat)
+                    <option value="{{ $speedboat->id }}" {{ old('speedboat_id') == $speedboat->id ? 'selected' : '' }}>
+                        {{ $speedboat->name }} ({{ $speedboat->type }})
+                    </option>
+                    @endforeach
+                </select>
+                @error('speedboat_id')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Filter Rute/Destinasi -->
+            <div class="mb-6">
+                <label for="destination_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Pilih Rute Perjalanan *
+                </label>
+                <select name="destination_id" id="destination_id" 
+                        class="form-select w-full" 
+                        required onchange="loadFilteredSchedules()">
+                    <option value="" selected>-- Pilih Rute --</option>
+                    @foreach($destinations as $destination)
+                    <option value="{{ $destination->id }}" {{ old('destination_id') == $destination->id ? 'selected' : '' }}>
+                        {{ $destination->departure_location }} → {{ $destination->destination_location }}
+                    </option>
+                    @endforeach
+                </select>
+                @error('destination_id')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Tanggal Keberangkatan -->
+            <div class="mb-6">
+                <label for="departure_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tanggal Keberangkatan *
+                </label>
+                <input type="date" name="departure_date" id="departure_date" 
+                       class="form-input w-full" 
+                       value="{{ old('departure_date', now()->format('Y-m-d')) }}"
+                       min="{{ now()->format('Y-m-d') }}"
+                       required onchange="loadFilteredSchedules()">
+                @error('departure_date')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Pilih Jadwal -->
             <div class="mb-6">
                 <label for="schedule_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -187,18 +242,8 @@ html.dark input, html.dark select, html.dark textarea {
                 </label>
                 <select name="schedule_id" id="schedule_id" 
                         class="form-select w-full" 
-                        required onchange="updatePricing()">
-                    <option value="">-- Pilih Jadwal --</option>
-                    @foreach($schedules as $schedule)
-                    <option value="{{ $schedule->id }}" 
-                            data-adult-price="{{ $schedule->destination->adult_price }}"
-                            data-child-price="{{ $schedule->destination->child_price }}"
-                            data-toddler-price="{{ $schedule->destination->toddler_price ?? 0 }}"
-                            data-capacity="{{ $schedule->capacity }}">
-                        {{ $schedule->destination->departure_location }} → {{ $schedule->destination->destination_location }} - {{ $schedule->name }} pukul {{ $schedule->departure_time->format('H:i') }}
-                        ({{ $schedule->capacity }} kapasitas)
-                    </option>
-                    @endforeach
+                        required onchange="updatePricing()" disabled>
+                    <option value="">-- Pilih Speedboat, Rute, dan Tanggal terlebih dahulu --</option>
                 </select>
                 @error('schedule_id')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -231,17 +276,18 @@ html.dark input, html.dark select, html.dark textarea {
                         <input type="number" name="adult_count" id="adult_count" 
                                class="form-input w-full" 
                                value="{{ old('adult_count', 1) }}" 
-                               min="1" required onchange="generatePassengerFields()">
+                               min="1" required onchange="updatePassengerCount()">
                     </div>
                     <div>
                         <label for="toddler_count" class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Balita</label>
                         <input type="number" name="toddler_count" id="toddler_count" 
                                class="form-input w-full" 
                                value="{{ old('toddler_count', 0) }}" 
-                               min="0" onchange="generatePassengerFields()">
+                               min="0" onchange="updatePassengerCount()">
                     </div>
                 </div>
                 <input type="hidden" name="child_count" value="0">
+                <input type="hidden" name="selected_seats" id="selected_seats" value="">
                 @error('adult_count')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
@@ -250,6 +296,42 @@ html.dark input, html.dark select, html.dark textarea {
             <!-- Data Penumpang -->
             <div id="passenger_fields" class="mb-6">
                 <!-- Field nama penumpang akan di-generate secara dinamis -->
+            </div>
+
+            <!-- Seat Selection -->
+            <div class="mb-6" id="seatSelectionSection" style="display: none;">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Pilih Kursi untuk Setiap Penumpang *
+                </label>
+                <div class="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                    <!-- Passenger list for seat assignment -->
+                    <div id="passengerSeatAssignment" class="mb-4">
+                        <!-- Will be generated dynamically -->
+                    </div>
+                    
+                    <div id="seatMap" class="text-center">
+                        <!-- Seat map will be generated here -->
+                    </div>
+                    <div class="mt-4 flex justify-center space-x-6 text-sm">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                            <span class="text-gray-700 dark:text-gray-300">Tersedia</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                            <span class="text-gray-700 dark:text-gray-300">Terisi</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                            <span class="text-gray-700 dark:text-gray-300">Dipilih</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
+                            <span class="text-gray-700 dark:text-gray-300">Sedang Dipilih</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="seatAssignmentStatus" class="mt-2 text-sm text-gray-600 dark:text-gray-400"></div>
             </div>
 
             <!-- Total Harga -->
@@ -339,7 +421,123 @@ html.dark input, html.dark select, html.dark textarea {
     </div>
 </div>
 
+<!-- Embed schedule data for JavaScript -->
 <script>
+// All schedules data from server
+const allSchedules = @json($allSchedules);
+
+// Seat selection state
+let passengerSeatAssignments = {}; // {passengerIndex: seatNumber}
+let passengers = []; // Array of passenger objects
+let currentSelectingPassenger = null;
+let totalPassengers = 0;
+
+function loadFilteredSchedules() {
+    const speedboatId = document.getElementById('speedboat_id').value;
+    const destinationId = document.getElementById('destination_id').value;
+    const departureDate = document.getElementById('departure_date').value;
+    const scheduleSelect = document.getElementById('schedule_id');
+    
+    // Reset schedule select
+    scheduleSelect.innerHTML = '<option value="">-- Loading... --</option>';
+    scheduleSelect.disabled = true;
+    document.getElementById('priceInfo').style.display = 'none';
+    document.getElementById('totalSection').style.display = 'none';
+    
+    if (speedboatId && destinationId && departureDate) {
+        // Fetch real-time schedules from server API using jQuery AJAX
+        $.ajax({
+            url: '/transactions/filtered-schedules',
+            method: 'GET',
+            data: {
+                speedboat_id: speedboatId,
+                destination_id: destinationId,
+                departure_date: departureDate
+            },
+            dataType: 'json',
+            success: function(filteredSchedules) {
+            scheduleSelect.innerHTML = '<option value="">-- Pilih Jadwal --</option>';
+            
+            if (filteredSchedules.length === 0) {
+                scheduleSelect.innerHTML = '<option value="">-- Tidak ada jadwal tersedia --</option>';
+            } else {
+                filteredSchedules.forEach(schedule => {
+                const option = document.createElement('option');
+                option.value = schedule.id;
+                option.dataset.adultPrice = schedule.destination.adult_price;
+                option.dataset.childPrice = schedule.destination.child_price;
+                option.dataset.toddlerPrice = schedule.destination.toddler_price || 0;
+                option.dataset.capacity = schedule.capacity;
+                option.dataset.availableSeats = schedule.available_seats || schedule.capacity;
+                option.dataset.bookedSeats = schedule.booked_seats || 0;
+                option.dataset.status = schedule.status || 'available';
+                
+                const departureTime = new Date(`2000-01-01T${schedule.departure_time}`);
+                const timeString = departureTime.toLocaleTimeString('id-ID', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                });
+                
+                const availableSeats = schedule.available_seats || schedule.capacity;
+                const bookedSeats = schedule.booked_seats || 0;
+                const totalCapacity = schedule.capacity;
+                
+                // Create status indicator
+                let statusText = '';
+                let statusClass = '';
+                if (schedule.status === 'full') {
+                    statusText = ' - PENUH';
+                    statusClass = 'text-red-600';
+                    option.disabled = true;
+                } else if (schedule.status === 'limited') {
+                    statusText = ' - TERBATAS';
+                    statusClass = 'text-orange-600';
+                } else {
+                    statusText = '';
+                    statusClass = 'text-green-600';
+                }
+                
+                option.textContent = `${schedule.name} pukul ${timeString} (${availableSeats}/${totalCapacity} kursi tersedia)${statusText}`;
+                
+                // Add visual styling for status
+                if (schedule.status === 'full') {
+                    option.style.color = '#dc2626';
+                    option.style.fontStyle = 'italic';
+                } else if (schedule.status === 'limited') {
+                    option.style.color = '#ea580c';
+                }
+                
+                scheduleSelect.appendChild(option);
+            });
+            }
+            
+            scheduleSelect.disabled = false;
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading schedules:', error, xhr.responseText);
+                console.error('XHR Status:', xhr.status);
+                console.error('XHR Response:', xhr.responseJSON || xhr.responseText);
+                
+                if (xhr.status === 401) {
+                    scheduleSelect.innerHTML = '<option value="">-- Session expired, please refresh page --</option>';
+                    alert('Session expired. Please refresh the page and login again.');
+                } else if (xhr.status === 403) {
+                    scheduleSelect.innerHTML = '<option value="">-- Access denied --</option>';
+                } else {
+                    scheduleSelect.innerHTML = '<option value="">-- Error loading schedules --</option>';
+                }
+                scheduleSelect.disabled = false;
+            }
+        });
+    } else {
+        scheduleSelect.innerHTML = '<option value="">-- Pilih Speedboat, Rute, dan Tanggal terlebih dahulu --</option>';
+        scheduleSelect.disabled = true;
+    }
+    
+    validateForm();
+}
+
 function updatePricing() {
     const select = document.getElementById('schedule_id');
     const option = select.options[select.selectedIndex];
@@ -354,12 +552,260 @@ function updatePricing() {
         document.getElementById('toddlerPrice').textContent = 'Rp ' + toddlerPrice.toLocaleString('id-ID');
         priceInfo.style.display = 'block';
         
+        // Load seat map when schedule is selected
+        loadSeatMap();
+        
         calculateTotal();
     } else {
         priceInfo.style.display = 'none';
         document.getElementById('totalSection').style.display = 'none';
+        document.getElementById('seatSelectionSection').style.display = 'none';
     }
     validateForm();
+}
+
+function loadSeatMap() {
+    const scheduleId = document.getElementById('schedule_id').value;
+    const departureDate = document.getElementById('departure_date').value;
+    
+    if (!scheduleId || !departureDate) return;
+    
+    // Show loading state
+    const seatMap = document.getElementById('seatMap');
+    seatMap.innerHTML = '<div class="text-center py-4"><div class="spinner-border" role="status"><span class="sr-only">Loading seat map...</span></div><p>Memuat peta kursi...</p></div>';
+    
+    // Fetch seat map from server using jQuery AJAX
+    console.log('Loading seat map for schedule:', scheduleId, 'date:', departureDate);
+    $.ajax({
+        url: '/transactions/seat-map',
+        method: 'GET',
+        data: {
+            schedule_id: scheduleId,
+            departure_date: departureDate
+        },
+        dataType: 'json',
+        success: function(data) {
+            console.log('Seat map data received:', data);
+            if (data.seat_layout) {
+                generateSeatMapFromServer(data.seat_layout);
+                document.getElementById('seatSelectionSection').style.display = 'block';
+            } else {
+                console.error('No seat_layout in response');
+                seatMap.innerHTML = '<div class="text-red-500">Error loading seat map - no layout data</div>';
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading seat map:', error, xhr.responseText);
+            console.log('Falling back to client-side seat generation');
+            
+            // Fallback to client-side generation
+            const select = document.getElementById('schedule_id');
+            const option = select.options[select.selectedIndex];
+            const capacity = parseInt(option.dataset.capacity);
+            
+            if (capacity) {
+                generateClientSideSeatMap(capacity);
+                document.getElementById('seatSelectionSection').style.display = 'block';
+            } else {
+                seatMap.innerHTML = '<div class="text-red-500">Error loading seat map: ' + error + '</div>';
+            }
+        }
+    });
+}
+
+function generateSeatMapFromServer(seatLayout) {
+    const seatMap = document.getElementById('seatMap');
+    
+    let html = '<div class="mb-4"><h4 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Layout Kursi Speedboat</h4></div>';
+    html += '<div class="max-w-md mx-auto">';
+    
+    seatLayout.forEach(row => {
+        html += '<div class="flex justify-center mb-2 space-x-2">';
+        
+        row.forEach(seat => {
+            const seatNumber = seat.seat_number;
+            const isAvailable = seat.is_available;
+            
+            let buttonClass = 'seat-btn w-10 h-10 border-2 rounded-lg text-white text-xs font-semibold transition-colors duration-200';
+            let clickHandler = '';
+            let title = `Kursi ${seatNumber}`;
+            
+            if (isAvailable) {
+                buttonClass += ' border-gray-300 bg-green-500 hover:bg-green-600';
+                clickHandler = `onclick="toggleSeat('${seatNumber}')"`;
+                title += ' - Tersedia';
+            } else {
+                buttonClass += ' border-red-300 bg-red-500 cursor-not-allowed';
+                title += ' - Sudah dipesan';
+            }
+            
+            html += `<button type="button" 
+                     class="${buttonClass}" 
+                     data-seat="${seatNumber}" 
+                     ${clickHandler}
+                     title="${title}"
+                     ${!isAvailable ? 'disabled' : ''}>
+                     ${seatNumber}
+                     </button>`;
+        });
+        
+        html += '</div>';
+    });
+    
+    html += '</div>';
+    
+    // Add legend
+    html += '<div class="mt-4 flex justify-center space-x-4 text-sm">';
+    html += '<div class="flex items-center"><div class="w-4 h-4 bg-green-500 rounded mr-2"></div>Tersedia</div>';
+    html += '<div class="flex items-center"><div class="w-4 h-4 bg-red-500 rounded mr-2"></div>Sudah dipesan</div>';
+    html += '<div class="flex items-center"><div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>Dipilih</div>';
+    html += '</div>';
+    
+    seatMap.innerHTML = html;
+}
+
+function generateClientSideSeatMap(capacity) {
+    const seatMap = document.getElementById('seatMap');
+    const seatsPerRow = 4;
+    const totalRows = Math.ceil(capacity / seatsPerRow);
+    const seatLabels = ['A', 'B', 'C', 'D'];
+    
+    let html = '<div class="mb-4"><h4 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Layout Kursi Speedboat</h4>';
+    html += '<p class="text-sm text-yellow-600">⚠️ Menampilkan semua kursi sebagai tersedia - silakan coba refresh jika ada masalah</p></div>';
+    html += '<div class="max-w-md mx-auto">';
+    
+    for (let row = 1; row <= totalRows; row++) {
+        html += '<div class="flex justify-center mb-2 space-x-2">';
+        
+        for (let seatIndex = 0; seatIndex < seatsPerRow; seatIndex++) {
+            const seatNumber = seatLabels[seatIndex] + row;
+            const seatCount = (row - 1) * seatsPerRow + seatIndex + 1;
+            
+            if (seatCount <= capacity) {
+                html += `<button type="button" 
+                         class="seat-btn w-10 h-10 border-2 border-gray-300 rounded-lg bg-green-500 hover:bg-green-600 text-white text-xs font-semibold transition-colors duration-200" 
+                         data-seat="${seatNumber}" 
+                         onclick="toggleSeat('${seatNumber}')"
+                         title="Kursi ${seatNumber} - Tersedia">
+                         ${seatNumber}
+                         </button>`;
+            }
+        }
+        
+        html += '</div>';
+    }
+    
+    html += '</div>';
+    
+    // Add legend
+    html += '<div class="mt-4 flex justify-center space-x-4 text-sm">';
+    html += '<div class="flex items-center"><div class="w-4 h-4 bg-green-500 rounded mr-2"></div>Tersedia</div>';
+    html += '<div class="flex items-center"><div class="w-4 h-4 bg-red-500 rounded mr-2"></div>Sudah dipesan</div>';
+    html += '<div class="flex items-center"><div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>Dipilih</div>';
+    html += '</div>';
+    
+    seatMap.innerHTML = html;
+}
+
+function toggleSeat(seatNumber) {
+    if (currentSelectingPassenger === null) {
+        alert('Silakan pilih penumpang terlebih dahulu sebelum memilih kursi.');
+        return;
+    }
+    
+    const seatBtn = document.querySelector(`[data-seat="${seatNumber}"]`);
+    
+    // Check if seat is already occupied by someone else
+    const seatOccupiedBy = Object.keys(passengerSeatAssignments).find(
+        passengerIndex => passengerSeatAssignments[passengerIndex] === seatNumber
+    );
+    
+    if (seatOccupiedBy && parseInt(seatOccupiedBy) !== currentSelectingPassenger) {
+        const occupyingPassenger = passengers[seatOccupiedBy];
+        alert(`Kursi ${seatNumber} sudah dipilih oleh ${occupyingPassenger.name}`);
+        return;
+    }
+    
+    // Check if current passenger already has a seat assigned
+    const currentAssignment = passengerSeatAssignments[currentSelectingPassenger];
+    if (currentAssignment) {
+        // Remove previous assignment
+        const oldSeatBtn = document.querySelector(`[data-seat="${currentAssignment}"]`);
+        if (oldSeatBtn) {
+            oldSeatBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            oldSeatBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            oldSeatBtn.innerHTML = currentAssignment; // Remove passenger name
+        }
+    }
+    
+    // Assign new seat
+    passengerSeatAssignments[currentSelectingPassenger] = seatNumber;
+    seatBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+    seatBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+    
+    // Add passenger name to seat button
+    const passenger = passengers[currentSelectingPassenger];
+    seatBtn.innerHTML = `${seatNumber}<br><span class="text-xs">${passenger.name}</span>`;
+    
+    // Update passenger list display
+    generatePassengerSeatList();
+    
+    // Update status
+    const statusDiv = document.getElementById('seatAssignmentStatus');
+    statusDiv.textContent = `${passenger.name} berhasil ditempatkan di kursi ${seatNumber}`;
+    
+    // Clear current selection after successful assignment
+    currentSelectingPassenger = null;
+    
+    // Update form data
+    updateSeatAssignmentData();
+    validateForm();
+}
+
+function updateSeatAssignmentData() {
+    const selectedSeatsInput = document.getElementById('selected_seats');
+    
+    // Create an array of seat assignments with passenger info
+    const seatAssignments = [];
+    Object.keys(passengerSeatAssignments).forEach(passengerIndex => {
+        const passenger = passengers[passengerIndex];
+        const seatNumber = passengerSeatAssignments[passengerIndex];
+        seatAssignments.push({
+            passengerIndex: parseInt(passengerIndex),
+            passengerName: passenger.name,
+            passengerType: passenger.type,
+            seatNumber: seatNumber
+        });
+    });
+    
+    selectedSeatsInput.value = JSON.stringify(seatAssignments);
+    
+    // Update status display
+    const statusDiv = document.getElementById('seatAssignmentStatus');
+    const assignedCount = Object.keys(passengerSeatAssignments).length;
+    if (assignedCount === 0) {
+        statusDiv.textContent = 'Belum ada kursi yang dipilih';
+    } else if (assignedCount < totalPassengers) {
+        statusDiv.textContent = `${assignedCount}/${totalPassengers} penumpang sudah memilih kursi`;
+    } else {
+        statusDiv.textContent = `Semua penumpang sudah memiliki kursi! ✅`;
+    }
+}
+
+function updatePassengerCount() {
+    const adultCount = parseInt(document.getElementById('adult_count').value) || 0;
+    const toddlerCount = parseInt(document.getElementById('toddler_count').value) || 0;
+    totalPassengers = adultCount + toddlerCount;
+    
+    // Reset seat selection if passenger count changes
+    selectedSeats = [];
+    document.querySelectorAll('.seat-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+        btn.classList.add('bg-green-500', 'hover:bg-green-600');
+    });
+    
+    updateSelectedSeatsInfo();
+    generatePassengerFields();
 }
 
 function calculateTotal() {
@@ -413,10 +859,13 @@ function togglePaymentFields() {
 function generatePassengerFields() {
     const adultCount = parseInt(document.getElementById('adult_count').value) || 0;
     const toddlerCount = parseInt(document.getElementById('toddler_count').value) || 0;
-    const totalPassengers = adultCount + toddlerCount;
+    totalPassengers = adultCount + toddlerCount;
     
     const container = document.getElementById('passenger_fields');
     let html = '';
+    
+    // Reset passengers array
+    passengers = [];
     
     if (totalPassengers > 0) {
         html += '<h4 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-4">Data Penumpang</h4>';
@@ -424,6 +873,9 @@ function generatePassengerFields() {
         
         // Generate adult passenger fields
         for (let i = 1; i <= adultCount; i++) {
+            const passengerIndex = passengers.length;
+            passengers.push({ type: 'adult', index: i, globalIndex: passengerIndex });
+            
             html += `
                 <div>
                     <label for="adult_name_${i}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -432,6 +884,7 @@ function generatePassengerFields() {
                     <input type="text" name="adult_names[]" id="adult_name_${i}" 
                            class="form-input w-full" 
                            placeholder="Masukkan nama lengkap"
+                           onchange="updatePassengerData(${passengerIndex})"
                            required>
                 </div>
             `;
@@ -439,6 +892,9 @@ function generatePassengerFields() {
         
         // Generate toddler passenger fields
         for (let i = 1; i <= toddlerCount; i++) {
+            const passengerIndex = passengers.length;
+            passengers.push({ type: 'toddler', index: i, globalIndex: passengerIndex });
+            
             html += `
                 <div>
                     <label for="toddler_name_${i}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -447,6 +903,7 @@ function generatePassengerFields() {
                     <input type="text" name="toddler_names[]" id="toddler_name_${i}" 
                            class="form-input w-full" 
                            placeholder="Masukkan nama lengkap"
+                           onchange="updatePassengerData(${passengerIndex})"
                            required>
                 </div>
             `;
@@ -456,11 +913,110 @@ function generatePassengerFields() {
     }
     
     container.innerHTML = html;
+    
+    // Reset seat assignments
+    passengerSeatAssignments = {};
+    currentSelectingPassenger = null;
+    
+    // Check if we should show seat selection
+    checkShowSeatSelection();
+    
     calculateTotal();
     validateForm();
 }
 
+function updatePassengerData(passengerIndex) {
+    const passenger = passengers[passengerIndex];
+    if (!passenger) return;
+    
+    let nameInput;
+    if (passenger.type === 'adult') {
+        nameInput = document.getElementById(`adult_name_${passenger.index}`);
+    } else {
+        nameInput = document.getElementById(`toddler_name_${passenger.index}`);
+    }
+    
+    passenger.name = nameInput.value;
+    
+    // Update seat assignment display if exists
+    updatePassengerSeatList();
+    
+    // Check if we should show seat selection
+    checkShowSeatSelection();
+}
+
+function checkShowSeatSelection() {
+    // Show seat selection only if:
+    // 1. Schedule is selected
+    // 2. All passenger names are filled
+    const scheduleSelected = document.getElementById('schedule_id').value !== '';
+    const allNamesFilled = passengers.every(p => p.name && p.name.trim() !== '');
+    
+    if (scheduleSelected && allNamesFilled && passengers.length > 0) {
+        loadSeatMapWithPassengers();
+        document.getElementById('seatSelectionSection').style.display = 'block';
+    } else {
+        document.getElementById('seatSelectionSection').style.display = 'none';
+    }
+}
+
+function loadSeatMapWithPassengers() {
+    generatePassengerSeatList();
+    loadSeatMap();
+}
+
+function generatePassengerSeatList() {
+    const container = document.getElementById('passengerSeatAssignment');
+    let html = '<h5 class="text-md font-semibold text-gray-700 dark:text-gray-300 mb-3">Klik nama penumpang, lalu pilih kursi:</h5>';
+    html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">';
+    
+    passengers.forEach((passenger, index) => {
+        const assignedSeat = passengerSeatAssignments[index] || '';
+        const isSelected = currentSelectingPassenger === index;
+        const hasAssignment = assignedSeat !== '';
+        
+        html += `
+            <button type="button" 
+                    class="passenger-btn p-3 border-2 rounded-lg text-left transition-all ${
+                        isSelected ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' : 
+                        hasAssignment ? 'border-green-500 bg-green-50 dark:bg-green-900/20' :
+                        'border-gray-300 hover:border-blue-400'
+                    }"
+                    onclick="selectPassengerForSeat(${index})">
+                <div class="font-medium text-gray-700 dark:text-gray-300">
+                    ${passenger.name || `${passenger.type === 'adult' ? 'Dewasa' : 'Balita'} ${passenger.index}`}
+                </div>
+                <div class="text-sm ${hasAssignment ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}">
+                    ${hasAssignment ? `Kursi: ${assignedSeat}` : 'Belum pilih kursi'}
+                </div>
+            </button>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function selectPassengerForSeat(passengerIndex) {
+    currentSelectingPassenger = passengerIndex;
+    generatePassengerSeatList(); // Refresh to show selection
+    
+    // Update status message
+    const passenger = passengers[passengerIndex];
+    const statusDiv = document.getElementById('seatAssignmentStatus');
+    statusDiv.textContent = `Sedang memilih kursi untuk: ${passenger.name}`;
+}
+
+function updatePassengerSeatList() {
+    if (document.getElementById('seatSelectionSection').style.display !== 'none') {
+        generatePassengerSeatList();
+    }
+}
+
 function validateForm() {
+    const speedboatId = document.getElementById('speedboat_id').value;
+    const destinationId = document.getElementById('destination_id').value;
+    const departureDate = document.getElementById('departure_date').value;
     const scheduleId = document.getElementById('schedule_id').value;
     const adultCount = parseInt(document.getElementById('adult_count').value) || 0;
     const toddlerCount = parseInt(document.getElementById('toddler_count').value) || 0;
@@ -480,9 +1036,16 @@ function validateForm() {
         if (!input.value.trim()) allNamesFilled = false;
     });
     
+    // Check if all passengers have seat assignments
+    const allPassengersHaveSeats = Object.keys(passengerSeatAssignments).length === totalPassengers;
+    
     // Check if all required fields are filled
-    const isValid = scheduleId !== '' && 
+    const isValid = speedboatId !== '' && 
+                   destinationId !== '' && 
+                   departureDate !== '' &&
+                   scheduleId !== '' && 
                    adultCount >= 1 && 
+                   allPassengersHaveSeats &&
                    allNamesFilled && 
                    paymentMethod !== undefined;
     
@@ -519,6 +1082,26 @@ function updatePaymentSelection() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
+    // Setup jQuery AJAX defaults
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        xhrFields: {
+            withCredentials: true
+        }
+    });
+    // Reset all form fields to default state
+    document.getElementById('speedboat_id').value = '';
+    document.getElementById('destination_id').value = '';
+    document.getElementById('schedule_id').innerHTML = '<option value="">-- Pilih Speedboat, Rute, dan Tanggal terlebih dahulu --</option>';
+    document.getElementById('schedule_id').value = '';
+    document.getElementById('schedule_id').disabled = true;
+    
+    // Initialize passenger count
+    totalPassengers = parseInt(document.getElementById('adult_count').value) + parseInt(document.getElementById('toddler_count').value);
+    
     updatePricing();
     
     // Initialize payment method selection visual
@@ -543,6 +1126,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add event listeners for form validation
+    document.getElementById('speedboat_id').addEventListener('change', validateForm);
+    document.getElementById('destination_id').addEventListener('change', validateForm);
+    document.getElementById('departure_date').addEventListener('change', validateForm);
     document.getElementById('schedule_id').addEventListener('change', validateForm);
     
     // Generate initial passenger fields

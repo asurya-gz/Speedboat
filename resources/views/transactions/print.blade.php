@@ -265,6 +265,12 @@
                 <span class="label">Tipe:</span>
                 <span class="value">{{ $ticket->passenger_type === 'adult' ? 'DEWASA' : ($ticket->passenger_type === 'toddler' ? 'BALITA' : 'ANAK') }}</span>
             </div>
+            @if($ticket->seat_number)
+            <div class="ticket-row">
+                <span class="label">No. Kursi:</span>
+                <span class="value large-text">{{ $ticket->seat_number }}</span>
+            </div>
+            @endif
             
             <div class="ticket-divider"></div>
             

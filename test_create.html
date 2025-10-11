@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Create Transaction Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+        <h1 class="text-2xl font-bold mb-6">Test Filtering System</h1>
+        
+        <!-- Filter Speedboat -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Speedboat</label>
+            <select id="speedboat_id" class="w-full border border-gray-300 rounded px-3 py-2" onchange="loadFilteredSchedules()">
+                <option value="">-- Pilih Speedboat --</option>
+                <option value="1">10scwhcuwy (Speed Boat)</option>
+                <option value="2">Speedboat Express 1</option>
+                <option value="3">Speedboat Express 2</option>
+            </select>
+        </div>
+
+        <!-- Filter Destinasi -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Rute</label>
+            <select id="destination_id" class="w-full border border-gray-300 rounded px-3 py-2" onchange="loadFilteredSchedules()">
+                <option value="">-- Pilih Rute --</option>
+                <option value="21">Marina Ancol → Pulau Tidung</option>
+                <option value="22">Marina Ancol → Pulau Harapan</option>
+                <option value="23">Marina Ancol → Pulau Pramuka</option>
+                <option value="24">Marina Ancol → Pulau Kelapa</option>
+            </select>
+        </div>
+
+        <!-- Pilih Jadwal -->
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Jadwal</label>
+            <select id="schedule_id" class="w-full border border-gray-300 rounded px-3 py-2" disabled>
+                <option value="">-- Pilih Speedboat dan Rute terlebih dahulu --</option>
+            </select>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="mt-4 p-4 bg-gray-50 rounded">
+            <h3 class="font-semibold mb-2">Test Results:</h3>
+            <div id="result-content">Pilih speedboat dan destinasi untuk melihat jadwal yang tersedia</div>
+        </div>
+    </div>
+
+    <script>
+        function loadFilteredSchedules() {
+            const speedboatId = document.getElementById('speedboat_id').value;
+            const destinationId = document.getElementById('destination_id').value;
+            const scheduleSelect = document.getElementById('schedule_id');
+            const resultContent = document.getElementById('result-content');
+            
+            // Reset schedule select
+            scheduleSelect.innerHTML = '<option value="">-- Loading... --</option>';
+            scheduleSelect.disabled = true;
+            
+            if (speedboatId && destinationId) {
+                // Make AJAX request to get filtered schedules
+                fetch(`http://localhost:8001/transactions/filtered-schedules?speedboat_id=${speedboatId}&destination_id=${destinationId}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(schedules => {
+                        scheduleSelect.innerHTML = '<option value="">-- Pilih Jadwal --</option>';
+                        
+                        if (schedules.length === 0) {
+                            scheduleSelect.innerHTML = '<option value="">-- Tidak ada jadwal tersedia --</option>';
+                            resultContent.textContent = 'Tidak ada jadwal tersedia untuk kombinasi speedboat dan destinasi ini.';
+                        } else {
+                            schedules.forEach(schedule => {
+                                const option = document.createElement('option');
+                                option.value = schedule.id;
+                                
+                                const departureTime = schedule.departure_time;
+                                option.textContent = `${schedule.name} pukul ${departureTime} (${schedule.available_seats}/${schedule.capacity} kursi tersedia)`;
+                                scheduleSelect.appendChild(option);
+                            });
+                            
+                            resultContent.innerHTML = `
+                                <p><strong>Found ${schedules.length} schedule(s):</strong></p>
+                                <ul class="list-disc list-inside mt-2">
+                                    ${schedules.map(s => `<li>${s.name} at ${s.departure_time} - ${s.available_seats}/${s.capacity} seats - Rp ${parseInt(s.destination.adult_price).toLocaleString('id-ID')}</li>`).join('')}
+                                </ul>
+                            `;
+                        }
+                        
+                        scheduleSelect.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error loading schedules:', error);
+                        scheduleSelect.innerHTML = '<option value="">-- Error loading schedules --</option>';
+                        resultContent.textContent = `Error: ${error.message}. This might be due to authentication requirements.`;
+                        scheduleSelect.disabled = false;
+                    });
+            } else {
+                scheduleSelect.innerHTML = '<option value="">-- Pilih Speedboat dan Rute terlebih dahulu --</option>';
+                scheduleSelect.disabled = true;
+                resultContent.textContent = 'Pilih speedboat dan destinasi untuk melihat jadwal yang tersedia';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -61,18 +61,29 @@ class TransactionController extends Controller
 
     public function create()
     {
-        $schedules = Schedule::with('destination', 'speedboat')
+        $speedboats = \App\Models\Speedboat::where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $destinations = \App\Models\Destination::where('is_active', true)
+            ->orderBy('departure_location')
+            ->get();
+
+        // Get all schedules for JavaScript
+        $allSchedules = Schedule::with(['destination', 'speedboat'])
             ->where('is_active', true)
             ->orderBy('departure_time')
             ->get();
 
-        return view('transactions.create', compact('schedules'));
+        return view('transactions.create', compact('speedboats', 'destinations', 'allSchedules'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'schedule_id' => 'required|exists:schedules,id',
+            'departure_date' => 'required|date|after_or_equal:today',
+            'selected_seats' => 'required|json',
             'adult_names' => 'required|array|min:1',
             'adult_names.*' => 'required|string|max:255',
             'toddler_names' => 'nullable|array',
@@ -88,10 +99,10 @@ class TransactionController extends Controller
         $schedule = Schedule::with('destination')->findOrFail($request->schedule_id);
         $totalPassengers = $request->adult_count + $request->child_count + $request->toddler_count;
 
-        // Calculate available seats from capacity minus existing bookings
-        $bookedSeats = $schedule->transactions()->sum('adult_count') + 
-                      $schedule->transactions()->sum('child_count') + 
-                      $schedule->transactions()->sum('toddler_count');
+        // Calculate available seats from capacity minus existing bookings for the selected date
+        $bookedSeats = $schedule->transactions()
+            ->whereDate('departure_date', $request->departure_date)
+            ->sum(DB::raw('adult_count + child_count + toddler_count'));
         $availableSeats = $schedule->capacity - $bookedSeats;
         
         if ($availableSeats < $totalPassengers) {
@@ -110,11 +121,32 @@ class TransactionController extends Controller
         // Use first adult name as main passenger name for transaction
         $mainPassengerName = $adultNames[0] ?? 'Unknown';
 
+        // Parse seat assignments
+        $seatAssignments = json_decode($request->selected_seats, true);
+        if (count($seatAssignments) !== $totalPassengers) {
+            return back()->withErrors(['seats' => 'Number of seat assignments must match total passengers.']);
+        }
+
+        // Extract seat numbers for availability check
+        $selectedSeatNumbers = array_column($seatAssignments, 'seatNumber');
+        
+        // Check if selected seats are available
+        $existingBookings = \App\Models\SeatBooking::where('schedule_id', $request->schedule_id)
+            ->where('departure_date', $request->departure_date)
+            ->whereIn('seat_number', $selectedSeatNumbers)
+            ->where('status', 'booked')
+            ->count();
+
+        if ($existingBookings > 0) {
+            return back()->withErrors(['seats' => 'Some selected seats are no longer available.']);
+        }
+
         DB::beginTransaction();
         try {
             $transaction = Transaction::create([
                 'transaction_code' => 'TRX-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6)),
                 'schedule_id' => $request->schedule_id,
+                'departure_date' => $request->departure_date,
                 'passenger_name' => $mainPassengerName,
                 'adult_count' => $request->adult_count,
                 'child_count' => $request->child_count,
@@ -128,63 +160,51 @@ class TransactionController extends Controller
                 'payment_reference' => $request->payment_reference
             ]);
 
-            $ticketIndex = 0;
-            
-            // Create tickets for adults
-            foreach ($adultNames as $adultName) {
-                $ticketIndex++;
+            // Create tickets and seat bookings based on seat assignments
+            foreach ($seatAssignments as $assignment) {
+                $ticketIndex = $assignment['passengerIndex'] + 1;
                 $ticketCode = 'TKT-' . $transaction->id . '-' . str_pad($ticketIndex, 3, '0', STR_PAD_LEFT);
                 
-                // Generate QR Code data
+                // Determine price based on passenger type
+                $price = $assignment['passengerType'] === 'adult' 
+                    ? $schedule->destination->adult_price 
+                    : ($schedule->destination->toddler_price ?? 0);
+                
+                // Generate QR Code data with seat information
                 $qrData = json_encode([
                     'ticket_code' => $ticketCode,
                     'transaction_id' => $transaction->id,
                     'schedule_id' => $schedule->id,
-                    'passenger_type' => 'adult',
+                    'passenger_type' => $assignment['passengerType'],
+                    'seat_number' => $assignment['seatNumber'],
                     'departure_time' => $schedule->departure_time->format('H:i'),
                     'destination_code' => $schedule->destination->code,
                     'destination' => $schedule->destination->departure_location . ' → ' . $schedule->destination->destination_location
                 ]);
                 
+                // Create ticket
                 Ticket::create([
                     'ticket_code' => $ticketCode,
                     'transaction_id' => $transaction->id,
-                    'passenger_name' => $adultName,
-                    'passenger_type' => 'adult',
-                    'price' => $schedule->destination->adult_price,
+                    'passenger_name' => $assignment['passengerName'],
+                    'passenger_type' => $assignment['passengerType'],
+                    'price' => $price,
                     'qr_code' => $qrData,
-                    'status' => 'active'
-                ]);
-            }
-            
-            // Create tickets for toddlers
-            foreach ($toddlerNames as $toddlerName) {
-                $ticketIndex++;
-                $ticketCode = 'TKT-' . $transaction->id . '-' . str_pad($ticketIndex, 3, '0', STR_PAD_LEFT);
-                
-                // Generate QR Code data
-                $qrData = json_encode([
-                    'ticket_code' => $ticketCode,
-                    'transaction_id' => $transaction->id,
-                    'schedule_id' => $schedule->id,
-                    'passenger_type' => 'toddler',
-                    'departure_time' => $schedule->departure_time->format('H:i'),
-                    'destination_code' => $schedule->destination->code,
-                    'destination' => $schedule->destination->departure_location . ' → ' . $schedule->destination->destination_location
+                    'status' => 'active',
+                    'seat_number' => $assignment['seatNumber']
                 ]);
                 
-                Ticket::create([
-                    'ticket_code' => $ticketCode,
+                // Create seat booking
+                \App\Models\SeatBooking::create([
+                    'schedule_id' => $request->schedule_id,
+                    'departure_date' => $request->departure_date,
+                    'seat_number' => $assignment['seatNumber'],
                     'transaction_id' => $transaction->id,
-                    'passenger_name' => $toddlerName,
-                    'passenger_type' => 'toddler',
-                    'price' => $schedule->destination->toddler_price ?? 0,
-                    'qr_code' => $qrData,
-                    'status' => 'active'
+                    'passenger_name' => $assignment['passengerName'],
+                    'passenger_type' => $assignment['passengerType'],
+                    'status' => 'booked'
                 ]);
             }
-
-            // No need to update available_seats as it's calculated dynamically
 
             DB::commit();
 
@@ -260,5 +280,77 @@ class TransactionController extends Controller
         $transactions = $query->orderBy('created_at', 'desc')->get();
         
         return Excel::download(new TransactionsExport($transactions), 'transactions-' . now()->format('Y-m-d') . '.xlsx');
+    }
+
+    public function getFilteredSchedules(Request $request)
+    {
+        try {
+            \Log::info('getFilteredSchedules called', $request->all());
+            
+            $query = Schedule::with(['destination', 'speedboat'])
+                ->where('is_active', true);
+
+            if ($request->filled('speedboat_id')) {
+                $query->where('speedboat_id', $request->speedboat_id);
+            }
+
+            if ($request->filled('destination_id')) {
+                $query->where('destination_id', $request->destination_id);
+            }
+
+            $schedules = $query->orderBy('departure_time')->get();
+            \Log::info('Found schedules count: ' . $schedules->count());
+
+            // Get selected date (default to today if not provided)
+            $selectedDate = $request->get('departure_date', now()->format('Y-m-d'));
+
+            // Calculate available seats for each schedule based on selected date
+            $schedules->each(function ($schedule) use ($selectedDate) {
+                // Count booked seats for this schedule on the selected date
+                $bookedSeats = $schedule->transactions()
+                    ->whereDate('departure_date', $selectedDate)
+                    ->sum(DB::raw('adult_count + child_count + toddler_count'));
+                
+                $schedule->available_seats = max(0, $schedule->capacity - $bookedSeats);
+                $schedule->booked_seats = $bookedSeats;
+                $schedule->selected_date = $selectedDate;
+                
+                // Add status indicator
+                if ($schedule->available_seats == 0) {
+                    $schedule->status = 'full';
+                } else if ($schedule->available_seats <= 5) {
+                    $schedule->status = 'limited';
+                } else {
+                    $schedule->status = 'available';
+                }
+            });
+
+            \Log::info('Returning schedules with capacity data');
+            return response()->json($schedules);
+        } catch (\Exception $e) {
+            \Log::error('Error in getFilteredSchedules: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal server error'], 500);
+        }
+    }
+
+    public function getSeatMap(Request $request)
+    {
+        $request->validate([
+            'schedule_id' => 'required|exists:schedules,id',
+            'departure_date' => 'required|date'
+        ]);
+
+        $schedule = Schedule::findOrFail($request->schedule_id);
+        $seatLayout = \App\Models\SeatBooking::generateSeatLayout(
+            $request->schedule_id,
+            $request->departure_date,
+            $schedule->capacity
+        );
+
+        return response()->json([
+            'schedule' => $schedule,
+            'seat_layout' => $seatLayout,
+            'capacity' => $schedule->capacity
+        ]);
     }
 }
