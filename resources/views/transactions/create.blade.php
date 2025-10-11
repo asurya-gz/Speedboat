@@ -616,44 +616,38 @@ function loadSeatMap() {
 function generateSeatMapFromServer(seatLayout) {
     const seatMap = document.getElementById('seatMap');
 
+    // Get schedule info to determine left_columns
+    const select = document.getElementById('schedule_id');
+    const scheduleId = select.value;
+    const schedule = allSchedules.find(s => s.id == scheduleId);
+    const leftColumns = schedule?.left_columns ?? 2;
+    const totalColumns = seatLayout[0]?.length || 0;
+    const rightColumns = totalColumns - leftColumns;
+
     let html = '<div class="mb-4"><h4 class="text-lg font-semibold text-gray-700 dark:text-gray-300">Layout Kursi Speedboat</h4></div>';
     html += '<div class="max-w-md mx-auto">';
 
     seatLayout.forEach(row => {
-        html += '<div class="flex justify-center mb-2 space-x-2">';
+        html += '<div class="flex justify-center mb-2">';
 
-        row.forEach(seat => {
-            // Handle empty seats (for layout alignment)
-            if (seat.is_empty || !seat.seat_number) {
-                html += `<div class="w-10 h-10 border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg opacity-30"></div>`;
-                return;
-            }
-
-            const seatNumber = seat.seat_number;
-            const isAvailable = seat.is_available;
-
-            let buttonClass = 'seat-btn w-10 h-10 border-2 rounded-lg text-white text-xs font-semibold transition-colors duration-200';
-            let clickHandler = '';
-            let title = `Kursi ${seatNumber}`;
-
-            if (isAvailable) {
-                buttonClass += ' border-gray-300 bg-green-500 hover:bg-green-600';
-                clickHandler = `onclick="toggleSeat('${seatNumber}')"`;
-                title += ' - Tersedia';
-            } else {
-                buttonClass += ' border-red-300 bg-red-500 cursor-not-allowed';
-                title += ' - Sudah dipesan';
-            }
-
-            html += `<button type="button"
-                     class="${buttonClass}"
-                     data-seat="${seatNumber}"
-                     ${clickHandler}
-                     title="${title}"
-                     ${!isAvailable ? 'disabled' : ''}>
-                     ${seatNumber}
-                     </button>`;
+        // Left side seats
+        html += '<div class="flex space-x-2">';
+        row.slice(0, leftColumns).forEach(seat => {
+            html += generateSeatHTML(seat);
         });
+        html += '</div>';
+
+        // Aisle (lorong)
+        if (leftColumns > 0 && rightColumns > 0) {
+            html += '<div class="w-6 flex items-center justify-center"><div class="h-full w-1 bg-gray-300 dark:bg-gray-600 opacity-30"></div></div>';
+        }
+
+        // Right side seats
+        html += '<div class="flex space-x-2">';
+        row.slice(leftColumns).forEach(seat => {
+            html += generateSeatHTML(seat);
+        });
+        html += '</div>';
 
         html += '</div>';
     });
@@ -668,6 +662,38 @@ function generateSeatMapFromServer(seatLayout) {
     html += '</div>';
 
     seatMap.innerHTML = html;
+}
+
+function generateSeatHTML(seat) {
+    // Handle empty seats (for layout alignment)
+    if (seat.is_empty || !seat.seat_number) {
+        return `<div class="w-10 h-10 border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg opacity-30"></div>`;
+    }
+
+    const seatNumber = seat.seat_number;
+    const isAvailable = seat.is_available;
+
+    let buttonClass = 'seat-btn w-10 h-10 border-2 rounded-lg text-white text-xs font-semibold transition-colors duration-200';
+    let clickHandler = '';
+    let title = `Kursi ${seatNumber}`;
+
+    if (isAvailable) {
+        buttonClass += ' border-gray-300 bg-green-500 hover:bg-green-600';
+        clickHandler = `onclick="toggleSeat('${seatNumber}')"`;
+        title += ' - Tersedia';
+    } else {
+        buttonClass += ' border-red-300 bg-red-500 cursor-not-allowed';
+        title += ' - Sudah dipesan';
+    }
+
+    return `<button type="button"
+             class="${buttonClass}"
+             data-seat="${seatNumber}"
+             ${clickHandler}
+             title="${title}"
+             ${!isAvailable ? 'disabled' : ''}>
+             ${seatNumber}
+             </button>`;
 }
 
 function generateClientSideSeatMap(capacity) {

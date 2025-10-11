@@ -163,7 +163,24 @@ class TransactionController extends Controller
             // Create tickets and seat bookings based on seat assignments
             foreach ($seatAssignments as $assignment) {
                 $ticketIndex = $assignment['passengerIndex'] + 1;
-                $ticketCode = 'TKT-' . $transaction->id . '-' . str_pad($ticketIndex, 3, '0', STR_PAD_LEFT);
+
+                // Generate more complex but still readable ticket code
+                // Format: SB-YYMMDD-XXX-CCC
+                // SB = Speedboat prefix
+                // YYMMDD = Departure date
+                // XXX = Ticket number (3 digits)
+                // CCC = 3-character checksum (letters + numbers)
+                $datePart = date('ymd', strtotime($request->departure_date));
+                $ticketNumber = str_pad($ticketIndex, 3, '0', STR_PAD_LEFT);
+
+                // Generate checksum: combine transaction ID, ticket index, and date
+                // Use only alphanumeric characters (no ambiguous like 0/O, 1/I)
+                $checksumSource = $transaction->id . $ticketIndex . $datePart;
+                $checksum = strtoupper(substr(md5($checksumSource), 0, 3));
+                // Replace ambiguous characters
+                $checksum = str_replace(['0', 'O', 'I', '1'], ['A', 'B', 'C', 'D'], $checksum);
+
+                $ticketCode = "SB-{$datePart}-{$ticketNumber}-{$checksum}";
                 
                 // Determine price based on passenger type
                 $price = $assignment['passengerType'] === 'adult' 

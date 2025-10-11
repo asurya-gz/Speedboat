@@ -32,12 +32,8 @@
                                 {{ $schedule->destination->code }}
                             </span>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Destinasi</label>
-                            <p class="text-sm text-gray-900 dark:text-white">{{ $schedule->destination->name }}</p>
-                        </div>
                         @if($schedule->destination->description)
-                        <div class="md:col-span-2">
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi</label>
                             <p class="text-sm text-gray-600 dark:text-gray-400">{{ $schedule->destination->description }}</p>
                         </div>
@@ -148,7 +144,18 @@
                             <!-- Seat layout will be rendered here -->
                         </div>
                         <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                            <strong>Konfigurasi:</strong> {{ $schedule->rows }} baris × {{ $schedule->columns }} kolom = {{ $schedule->capacity }} kursi
+                            <div><strong>Total Layout:</strong> {{ $schedule->rows }} baris × {{ $schedule->columns }} kolom = {{ $schedule->rows * $schedule->columns }} kursi</div>
+                            <div class="mt-1">
+                                <strong>Konfigurasi:</strong> {{ $schedule->left_columns ?? 2 }} kiri | lorong | {{ $schedule->columns - ($schedule->left_columns ?? 2) }} kanan
+                            </div>
+                            <div class="mt-2">
+                                <strong class="text-green-600 dark:text-green-400">Kapasitas Maksimal:</strong> {{ $schedule->capacity }} penumpang
+                            </div>
+                            @if(($schedule->rows * $schedule->columns) > $schedule->capacity)
+                            <div class="mt-1 text-yellow-600 dark:text-yellow-400">
+                                <strong>Kursi Disabled:</strong> {{ ($schedule->rows * $schedule->columns) - $schedule->capacity }} kursi
+                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -231,39 +238,108 @@ document.addEventListener('DOMContentLoaded', function() {
     const rows = {{ $schedule->rows }};
     const columns = {{ $schedule->columns }};
     const capacity = {{ $schedule->capacity }};
+    const leftColumns = {{ $schedule->left_columns ?? 2 }};
 
-    renderSeatLayout(seatNumbers, rows, columns, capacity);
+    renderSeatLayout(seatNumbers, rows, columns, capacity, leftColumns);
 });
 
-function renderSeatLayout(seatNumbers, rows, columns, capacity) {
+function renderSeatLayout(seatNumbers, rows, columns, capacity, leftColumns) {
     const container = document.getElementById('seatLayoutDisplay');
     if (!container) return;
 
+    const rightColumns = columns - leftColumns;
     let html = '<div class="inline-block">';
 
     let seatCount = 0;
     for (let row = 1; row <= rows; row++) {
-        html += '<div class="flex justify-center mb-2 space-x-2">';
+        html += '<div class="flex justify-center mb-2">';
 
-        for (let col = 0; col < columns; col++) {
+        // Left side seats
+        html += '<div class="flex space-x-2">';
+        for (let col = 0; col < leftColumns; col++) {
             const position = `${row}-${col}`;
-            const seatNumber = seatNumbers[position];
+            const seatData = seatNumbers[position];
 
-            if (seatNumber) {
-                // Seat exists (within capacity)
-                html += `
-                    <div class="w-12 h-12 border-2 border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-900 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-semibold flex items-center justify-center">
-                        ${seatNumber}
-                    </div>
-                `;
+            if (seatData) {
                 seatCount++;
-            } else {
-                // Empty space (beyond capacity)
-                html += `
-                    <div class="w-12 h-12 border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg opacity-30"></div>
-                `;
+
+                // Check if seatData is an object (new format) or string (old format)
+                if (typeof seatData === 'object' && seatData.number) {
+                    // New format with enabled/disabled
+                    if (seatData.enabled) {
+                        // Active seat
+                        html += `
+                            <div class="w-12 h-12 border-2 border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-900 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-semibold flex items-center justify-center"
+                                 title="Kursi Aktif">
+                                ${seatData.number}
+                            </div>
+                        `;
+                    } else {
+                        // Disabled seat
+                        html += `
+                            <div class="w-12 h-12 border-2 border-dashed border-gray-400 dark:border-gray-500 bg-gray-200 dark:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400 text-xs font-semibold flex items-center justify-center opacity-40"
+                                 title="Kursi Disabled - Melebihi kapasitas">
+                                ${seatData.number}
+                            </div>
+                        `;
+                    }
+                } else {
+                    // Old format (string)
+                    html += `
+                        <div class="w-12 h-12 border-2 border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-900 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-semibold flex items-center justify-center">
+                            ${seatData}
+                        </div>
+                    `;
+                }
             }
         }
+        html += '</div>';
+
+        // Aisle (lorong)
+        if (leftColumns > 0 && rightColumns > 0) {
+            html += '<div class="w-8 flex items-center justify-center"><div class="h-full w-1 bg-gray-300 dark:bg-gray-600 opacity-30"></div></div>';
+        }
+
+        // Right side seats
+        html += '<div class="flex space-x-2">';
+        for (let col = leftColumns; col < columns; col++) {
+            const position = `${row}-${col}`;
+            const seatData = seatNumbers[position];
+
+            if (seatData) {
+                seatCount++;
+
+                // Check if seatData is an object (new format) or string (old format)
+                if (typeof seatData === 'object' && seatData.number) {
+                    // New format with enabled/disabled
+                    if (seatData.enabled) {
+                        // Active seat
+                        html += `
+                            <div class="w-12 h-12 border-2 border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-900 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-semibold flex items-center justify-center"
+                                 title="Kursi Aktif">
+                                ${seatData.number}
+                            </div>
+                        `;
+                    } else {
+                        // Disabled seat
+                        html += `
+                            <div class="w-12 h-12 border-2 border-dashed border-gray-400 dark:border-gray-500 bg-gray-200 dark:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400 text-xs font-semibold flex items-center justify-center opacity-40"
+                                 title="Kursi Disabled - Melebihi kapasitas">
+                                ${seatData.number}
+                            </div>
+                        `;
+                    }
+                } else {
+                    // Old format (string)
+                    html += `
+                        <div class="w-12 h-12 border-2 border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-900 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-semibold flex items-center justify-center">
+                            ${seatData}
+                        </div>
+                    `;
+                }
+            }
+        }
+        html += '</div>';
 
         html += '</div>';
     }

@@ -220,14 +220,6 @@
     </style>
 </head>
 <body>
-    <!-- Print Controls (hidden when printing) -->
-    <div class="print-controls no-print">
-        <h2>Print Tiket - {{ $transaction->transaction_code }}</h2>
-        <p>{{ $transaction->tickets->count() }} tiket akan dicetak</p>
-        <button onclick="window.print()" class="btn-print">🖨️ Cetak Semua Tiket</button>
-        <button onclick="window.history.back()" class="btn-back">← Kembali</button>
-    </div>
-
     <!-- Generate ticket for each passenger -->
     @foreach($transaction->tickets as $index => $ticket)
     <div class="ticket">

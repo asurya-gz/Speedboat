@@ -113,25 +113,59 @@
                         Layout Kursi
                     </h4>
 
-                    <div class="mb-4">
-                        <label for="columns" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Kursi per Baris (Menyamping)
-                        </label>
-                        <input type="number"
-                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700"
-                               id="columns"
-                               name="columns"
-                               value="{{ old('columns', $schedule->columns ?? 4) }}"
-                               min="1"
-                               max="10"
-                               onchange="calculateRowsAndGenerateLayout()"
-                               required>
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Jumlah kursi menyamping dari kiri ke kanan</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label for="columns" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Kursi Menyamping (Kolom)
+                            </label>
+                            <input type="number"
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                                   id="columns"
+                                   name="columns"
+                                   value="{{ old('columns', $schedule->columns ?? 5) }}"
+                                   min="1"
+                                   max="10"
+                                   oninput="calculateTotalSeatsAndGenerateLayout()"
+                                   required>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Total kursi per baris</p>
+                        </div>
+
+                        <div>
+                            <label for="rows" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Kursi Kebelakang (Baris)
+                            </label>
+                            <input type="number"
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                                   id="rows"
+                                   name="rows"
+                                   value="{{ old('rows', $schedule->rows ?? 5) }}"
+                                   min="1"
+                                   max="20"
+                                   oninput="calculateTotalSeatsAndGenerateLayout()"
+                                   required>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Jumlah baris kursi</p>
+                        </div>
+
+                        <div>
+                            <label for="left_columns" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Kursi Kiri (Lorong)
+                            </label>
+                            <input type="number"
+                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700"
+                                   id="left_columns"
+                                   name="left_columns"
+                                   value="{{ old('left_columns', $schedule->left_columns ?? 2) }}"
+                                   min="0"
+                                   max="10"
+                                   oninput="calculateTotalSeatsAndGenerateLayout()"
+                                   required>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Kursi di sisi kiri lorong</p>
+                        </div>
                     </div>
 
-                    <div class="bg-gray-50 dark:bg-gray-600 rounded px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
-                        <strong>Jumlah Baris (Otomatis):</strong> <span id="rows_display">-</span>
-                        <input type="hidden" id="rows" name="rows" value="{{ old('rows', $schedule->rows ?? 5) }}">
+                    <div class="bg-gray-50 dark:bg-gray-600 rounded px-3 py-2 text-sm text-gray-700 dark:text-gray-300 mb-4">
+                        <strong>Total Layout Kursi:</strong> <span id="total_seats_display">-</span> kursi
+                        <span id="seat_capacity_info" class="ml-2"></span>
                     </div>
 
                     <!-- Preview Layout Kursi -->
@@ -520,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('capacity').addEventListener('input', function() {
         validateCapacity();
         validateForm();
-        calculateRowsAndGenerateLayout();
+        calculateTotalSeatsAndGenerateLayout();
     });
 
     // Add event listener for max capacity checkbox
@@ -543,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Recalculate layout when capacity changes
-        calculateRowsAndGenerateLayout();
+        calculateTotalSeatsAndGenerateLayout();
 
         // Additional validation calls
         validateCapacity();
@@ -565,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Generate initial seat layout after DOM is ready
     setTimeout(function() {
-        if (typeof calculateRowsAndGenerateLayout === 'function') {
+        if (typeof calculateTotalSeatsAndGenerateLayout === 'function') {
             // Initialize from existing schedule data if available
             @if(isset($schedule->seat_numbers))
             try {
@@ -578,13 +612,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     renderSeatLayoutPreview(rows, columns, capacity);
                     updateSeatNumbersInput();
                 } else {
-                    calculateRowsAndGenerateLayout();
+                    calculateTotalSeatsAndGenerateLayout();
                 }
             } catch (e) {
-                calculateRowsAndGenerateLayout();
+                calculateTotalSeatsAndGenerateLayout();
             }
             @else
-            calculateRowsAndGenerateLayout();
+            calculateTotalSeatsAndGenerateLayout();
             @endif
         }
     }, 100);
@@ -723,21 +757,33 @@ function validateForm() {
 // Seat layout management
 let seatNumbers = {};
 
-function calculateRowsAndGenerateLayout() {
-    const capacityInput = document.getElementById('capacity');
+function calculateTotalSeatsAndGenerateLayout() {
     const columnsInput = document.getElementById('columns');
     const rowsInput = document.getElementById('rows');
-    const rowsDisplay = document.getElementById('rows_display');
+    const capacityInput = document.getElementById('capacity');
+    const totalSeatsDisplay = document.getElementById('total_seats_display');
+    const seatCapacityInfo = document.getElementById('seat_capacity_info');
 
-    const capacity = parseInt(capacityInput.value) || 0;
-    const columns = parseInt(columnsInput.value) || 4;
+    const columns = parseInt(columnsInput.value) || 0;
+    const rows = parseInt(rowsInput.value) || 0;
+    const maxCapacity = parseInt(capacityInput.value) || 0;
 
-    // Calculate rows based on capacity and columns
-    const rows = Math.ceil(capacity / columns);
+    // Calculate total seats from layout
+    const totalSeats = rows * columns;
 
-    // Update hidden input and display
-    rowsInput.value = rows;
-    rowsDisplay.textContent = rows + ' baris';
+    // Update display
+    totalSeatsDisplay.textContent = totalSeats;
+
+    // Show info about capacity
+    if (totalSeats > maxCapacity) {
+        const excessSeats = totalSeats - maxCapacity;
+        seatCapacityInfo.innerHTML = `<span class="text-yellow-600 dark:text-yellow-400">(${excessSeats} kursi akan kosong/disabled)</span>`;
+    } else if (totalSeats === maxCapacity) {
+        seatCapacityInfo.innerHTML = `<span class="text-green-600 dark:text-green-400">(Sesuai kapasitas maksimal)</span>`;
+    } else {
+        const remainingSeats = maxCapacity - totalSeats;
+        seatCapacityInfo.innerHTML = `<span class="text-blue-600 dark:text-blue-400">(Masih bisa tambah ${remainingSeats} kursi)</span>`;
+    }
 
     // Generate seat layout
     generateSeatLayout();
@@ -750,7 +796,7 @@ function generateSeatLayout() {
 
     const rows = parseInt(rowsInput.value) || 5;
     const columns = parseInt(columnsInput.value) || 4;
-    const capacity = parseInt(capacityInput.value) || 0;
+    const maxCapacity = parseInt(capacityInput.value) || 0;
 
     // Always regenerate seat numbers to match new layout
     seatNumbers = {};
@@ -759,18 +805,30 @@ function generateSeatLayout() {
     let seatCount = 0;
     for (let row = 1; row <= rows; row++) {
         for (let col = 0; col < columns; col++) {
-            if (seatCount >= capacity) break; // Stop if we reach capacity
+            seatCount++;
 
+            // Generate seat number for all positions
             const seatLabel = seatLabels[col % seatLabels.length];
             const seatNumber = seatLabel + row;
             const position = `${row}-${col}`;
-            seatNumbers[position] = seatNumber;
-            seatCount++;
+
+            // Mark as enabled or disabled based on capacity
+            if (seatCount <= maxCapacity) {
+                seatNumbers[position] = {
+                    number: seatNumber,
+                    enabled: true
+                };
+            } else {
+                seatNumbers[position] = {
+                    number: seatNumber,
+                    enabled: false
+                };
+            }
         }
     }
 
     // Generate preview
-    renderSeatLayoutPreview(rows, columns, capacity);
+    renderSeatLayoutPreview(rows, columns, maxCapacity);
 
     // Update hidden input
     updateSeatNumbersInput();
@@ -780,43 +838,102 @@ function generateSeatLayout() {
     validateForm();
 }
 
-function renderSeatLayoutPreview(rows, columns, capacity) {
+function renderSeatLayoutPreview(rows, columns, maxCapacity) {
     const preview = document.getElementById('seatLayoutPreview');
+    const leftColumns = parseInt(document.getElementById('left_columns').value) || 0;
+    const rightColumns = columns - leftColumns;
+
     let html = '<div class="inline-block">';
 
     let seatCount = 0;
+    let enabledCount = 0;
+    let disabledCount = 0;
+
     for (let row = 1; row <= rows; row++) {
-        html += '<div class="flex justify-center mb-2 space-x-2">';
+        html += '<div class="flex justify-center mb-2">';
 
-        for (let col = 0; col < columns; col++) {
+        // Left side seats
+        html += '<div class="flex space-x-2">';
+        for (let col = 0; col < leftColumns; col++) {
             const position = `${row}-${col}`;
-            const seatNumber = seatNumbers[position];
+            const seatData = seatNumbers[position];
 
-            if (seatNumber) {
-                // Seat exists (within capacity)
-                html += `
-                    <button type="button"
-                            class="w-12 h-12 border-2 border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-semibold transition-colors duration-200"
-                            onclick="editSeatNumber('${position}')"
-                            title="Klik untuk edit nomor kursi">
-                        ${seatNumber}
-                    </button>
-                `;
+            if (seatData) {
                 seatCount++;
-            } else {
-                // Empty space (beyond capacity)
-                html += `
-                    <div class="w-12 h-12 border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 rounded-lg opacity-30"></div>
-                `;
+
+                if (seatData.enabled) {
+                    // Active seat (within capacity)
+                    enabledCount++;
+                    html += `
+                        <button type="button"
+                                class="w-12 h-12 border-2 border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-semibold transition-colors duration-200"
+                                onclick="editSeatNumber('${position}')"
+                                title="Klik untuk edit nomor kursi - Kursi Aktif">
+                            ${seatData.number}
+                        </button>
+                    `;
+                } else {
+                    // Disabled seat (beyond capacity)
+                    disabledCount++;
+                    html += `
+                        <div class="w-12 h-12 border-2 border-dashed border-gray-400 dark:border-gray-500 bg-gray-200 dark:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400 text-xs font-semibold flex items-center justify-center opacity-40"
+                             title="Kursi Disabled - Melebihi kapasitas maksimal">
+                            ${seatData.number}
+                        </div>
+                    `;
+                }
             }
         }
+        html += '</div>';
+
+        // Aisle (lorong)
+        if (leftColumns > 0 && rightColumns > 0) {
+            html += '<div class="w-8 flex items-center justify-center"><div class="h-full w-1 bg-gray-300 dark:bg-gray-600 opacity-30"></div></div>';
+        }
+
+        // Right side seats
+        html += '<div class="flex space-x-2">';
+        for (let col = leftColumns; col < columns; col++) {
+            const position = `${row}-${col}`;
+            const seatData = seatNumbers[position];
+
+            if (seatData) {
+                seatCount++;
+
+                if (seatData.enabled) {
+                    // Active seat (within capacity)
+                    enabledCount++;
+                    html += `
+                        <button type="button"
+                                class="w-12 h-12 border-2 border-blue-300 dark:border-blue-600 bg-blue-100 dark:bg-blue-900 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-lg text-blue-800 dark:text-blue-200 text-xs font-semibold transition-colors duration-200"
+                                onclick="editSeatNumber('${position}')"
+                                title="Klik untuk edit nomor kursi - Kursi Aktif">
+                            ${seatData.number}
+                        </button>
+                    `;
+                } else {
+                    // Disabled seat (beyond capacity)
+                    disabledCount++;
+                    html += `
+                        <div class="w-12 h-12 border-2 border-dashed border-gray-400 dark:border-gray-500 bg-gray-200 dark:bg-gray-700 rounded-lg text-gray-500 dark:text-gray-400 text-xs font-semibold flex items-center justify-center opacity-40"
+                             title="Kursi Disabled - Melebihi kapasitas maksimal">
+                            ${seatData.number}
+                        </div>
+                    `;
+                }
+            }
+        }
+        html += '</div>';
 
         html += '</div>';
     }
 
     html += '</div>';
     html += `<div class="mt-3 text-sm text-gray-600 dark:text-gray-400">
-        <strong>Total Kursi:</strong> ${Object.keys(seatNumbers).length} kursi (${rows} baris × ${columns} kolom)
+        <strong>Total Layout:</strong> ${seatCount} kursi (${rows} baris × ${columns} kolom)<br>
+        <strong>Konfigurasi:</strong> ${leftColumns} kiri | lorong | ${rightColumns} kanan<br>
+        <strong class="text-green-600 dark:text-green-400">Kursi Aktif:</strong> ${enabledCount} kursi |
+        <strong class="text-gray-500 dark:text-gray-400">Kursi Disabled:</strong> ${disabledCount} kursi
     </div>`;
 
     preview.innerHTML = html;
@@ -826,7 +943,8 @@ let currentEditingPosition = null;
 
 function editSeatNumber(position) {
     currentEditingPosition = position;
-    const currentNumber = seatNumbers[position] || '';
+    const seatData = seatNumbers[position];
+    const currentNumber = seatData ? seatData.number : '';
 
     // Show modal
     const modal = document.getElementById('editSeatModal');
@@ -866,7 +984,7 @@ function saveSeatNumber() {
 
     // Check if seat number already exists
     const existingPosition = Object.keys(seatNumbers).find(
-        pos => pos !== currentEditingPosition && seatNumbers[pos] === newNumber
+        pos => pos !== currentEditingPosition && seatNumbers[pos].number === newNumber
     );
 
     if (existingPosition) {
@@ -875,14 +993,18 @@ function saveSeatNumber() {
         return;
     }
 
-    // Save new seat number
-    seatNumbers[currentEditingPosition] = newNumber;
+    // Save new seat number (keep enabled status)
+    const currentSeatData = seatNumbers[currentEditingPosition];
+    seatNumbers[currentEditingPosition] = {
+        number: newNumber,
+        enabled: currentSeatData.enabled
+    };
 
     // Re-render preview
     const rows = parseInt(document.getElementById('rows').value);
     const columns = parseInt(document.getElementById('columns').value);
-    const capacity = parseInt(document.getElementById('capacity').value);
-    renderSeatLayoutPreview(rows, columns, capacity);
+    const maxCapacity = parseInt(document.getElementById('capacity').value);
+    renderSeatLayoutPreview(rows, columns, maxCapacity);
 
     // Update hidden input
     updateSeatNumbersInput();
