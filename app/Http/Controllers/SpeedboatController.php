@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Speedboat;
+use App\Services\WooCommerceProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -61,17 +62,40 @@ class SpeedboatController extends Controller
             'code' => 'required|string|max:10|unique:speedboats',
             'capacity' => 'required|integer|min:1',
             'type' => 'nullable|string|max:100',
-            'description' => 'nullable|string'
+            'description' => 'nullable|string',
+            'woocommerce_product_id' => 'nullable|integer',
+            'woocommerce_bus_id' => 'nullable|string|max:50',
+            'auto_create_woocommerce' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['name', 'code', 'capacity', 'type', 'description']);
+        $data = $request->only(['name', 'code', 'capacity', 'type', 'description', 'woocommerce_product_id', 'woocommerce_bus_id']);
         $data['is_active'] = $request->has('is_active');
 
-        Speedboat::create($data);
+        $speedboat = Speedboat::create($data);
+
+        // Auto-create WooCommerce product if requested and not manually mapped
+        if ($request->has('auto_create_woocommerce') && !$request->filled('woocommerce_product_id')) {
+            $wooCommerceService = new WooCommerceProductService();
+            $result = $wooCommerceService->createProduct($speedboat);
+
+            if ($result['success']) {
+                // Update speedboat with WooCommerce Product ID
+                $speedboat->update([
+                    'woocommerce_product_id' => $result['product_id'],
+                ]);
+
+                return redirect()->route('speedboats.index')
+                    ->with('success', 'Speedboat berhasil ditambahkan dan product WooCommerce telah dibuat (ID: ' . $result['product_id'] . ')');
+            } else {
+                return redirect()->route('speedboats.index')
+                    ->with('warning', 'Speedboat berhasil ditambahkan, tetapi gagal membuat product WooCommerce: ' . $result['message']);
+            }
+        }
+
         return redirect()->route('speedboats.index')->with('success', 'Speedboat berhasil ditambahkan');
     }
 
@@ -92,17 +116,35 @@ class SpeedboatController extends Controller
             'code' => 'required|string|max:10|unique:speedboats,code,' . $speedboat->id,
             'capacity' => 'required|integer|min:1',
             'type' => 'nullable|string|max:100',
-            'description' => 'nullable|string'
+            'description' => 'nullable|string',
+            'woocommerce_product_id' => 'nullable|integer',
+            'woocommerce_bus_id' => 'nullable|string|max:50',
+            'auto_sync_woocommerce' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
-        $data = $request->only(['name', 'code', 'capacity', 'type', 'description']);
+        $data = $request->only(['name', 'code', 'capacity', 'type', 'description', 'woocommerce_product_id', 'woocommerce_bus_id']);
         $data['is_active'] = $request->has('is_active');
 
         $speedboat->update($data);
+
+        // Auto-sync to WooCommerce if requested and product is mapped
+        if ($request->has('auto_sync_woocommerce') && $speedboat->woocommerce_product_id) {
+            $wooCommerceService = new WooCommerceProductService();
+            $result = $wooCommerceService->updateProduct($speedboat);
+
+            if ($result['success']) {
+                return redirect()->route('speedboats.index')
+                    ->with('success', 'Speedboat berhasil diupdate dan disinkronisasi ke WooCommerce');
+            } else {
+                return redirect()->route('speedboats.index')
+                    ->with('warning', 'Speedboat berhasil diupdate, tetapi gagal sync ke WooCommerce: ' . $result['message']);
+            }
+        }
+
         return redirect()->route('speedboats.index')->with('success', 'Speedboat berhasil diupdate');
     }
 

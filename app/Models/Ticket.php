@@ -21,14 +21,17 @@ class Ticket extends Model
         'boarding_time',
         'validated_at',
         'validated_by',
-        'is_synced'
+        'is_synced',
+        'woocommerce_line_item_id',
+        'synced_at'
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'boarding_time' => 'datetime',
         'validated_at' => 'datetime',
-        'is_synced' => 'boolean'
+        'is_synced' => 'boolean',
+        'synced_at' => 'datetime'
     ];
 
     public function transaction()

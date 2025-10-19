@@ -179,6 +179,98 @@
         </div>
     </div>
 
+    <!-- WooCommerce Sync Status -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm mt-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 {{ $transaction->is_synced ? 'bg-green-50 dark:bg-green-900/20' : ($transaction->sync_error ? 'bg-red-50 dark:bg-red-900/20' : 'bg-yellow-50 dark:bg-yellow-900/20') }}">
+            <h3 class="text-lg font-semibold flex items-center {{ $transaction->is_synced ? 'text-green-900 dark:text-green-100' : ($transaction->sync_error ? 'text-red-900 dark:text-red-100' : 'text-yellow-900 dark:text-yellow-100') }}">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                WooCommerce Sync Status
+            </h3>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600 dark:text-gray-400">Status Sync</span>
+                @if($transaction->is_synced)
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Synced to WooCommerce
+                    </span>
+                @elseif($transaction->sync_error)
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Sync Failed
+                    </span>
+                @else
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Pending Sync
+                    </span>
+                @endif
+            </div>
+
+            @if($transaction->woocommerce_order_id)
+            <div class="flex justify-between items-center">
+                <span class="text-gray-600 dark:text-gray-400">WooCommerce Order ID</span>
+                <a href="https://naikspeed.com/wp-admin/post.php?post={{ $transaction->woocommerce_order_id }}&action=edit"
+                   target="_blank"
+                   class="inline-flex items-center text-sm font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                    #{{ $transaction->woocommerce_order_id }}
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                </a>
+            </div>
+            @endif
+
+            @if($transaction->synced_at)
+            <div class="flex justify-between">
+                <span class="text-gray-600 dark:text-gray-400">Synced At</span>
+                <span class="font-semibold dark:text-white">
+                    {{ $transaction->synced_at->format('d M Y H:i') }}
+                    <span class="text-xs text-gray-500 dark:text-gray-400">({{ $transaction->synced_at->diffForHumans() }})</span>
+                </span>
+            </div>
+            @endif
+
+            @if($transaction->sync_error)
+            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <span class="text-gray-600 dark:text-gray-400 block mb-2">Error Message</span>
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                    <p class="text-sm text-red-800 dark:text-red-200">{{ $transaction->sync_error }}</p>
+                </div>
+            </div>
+            @endif
+
+            @if(!$transaction->is_synced && !$transaction->woocommerce_order_id)
+            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                    <svg class="w-4 h-4 inline text-blue-600 dark:text-blue-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Transaksi ini belum tersinkronisasi ke WooCommerce. Sync otomatis akan berjalan setiap 5 menit, atau Anda bisa melakukan sync manual.
+                </p>
+                @if(Auth::user()->isAdmin())
+                <a href="{{ route('sync.status') }}" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Go to Sync Dashboard
+                </a>
+                @endif
+            </div>
+            @endif
+        </div>
+    </div>
+
     <!-- Tickets List -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm mt-6">
         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">

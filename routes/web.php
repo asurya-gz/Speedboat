@@ -9,6 +9,7 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SpeedboatController;
+use App\Http\Controllers\SyncStatusController;
 
 /*
 |--------------------------------------------------------------------------
@@ -66,6 +67,14 @@ Route::middleware(['auth', 'role'])->group(function () {
         Route::get('reports/dashboard', [ReportController::class, 'dashboard'])->name('reports.dashboard');
         Route::get('reports/transactions', [ReportController::class, 'transactions'])->name('reports.transactions');
         Route::get('reports/tickets', [ReportController::class, 'tickets'])->name('reports.tickets');
+
+        // WooCommerce Sync Status routes - admin only
+        Route::get('sync/status', [SyncStatusController::class, 'index'])->name('sync.status');
+        Route::get('sync/history', [SyncStatusController::class, 'history'])->name('sync.history');
+        Route::get('sync/history/export', [SyncStatusController::class, 'exportHistory'])->name('sync.history.export');
+        Route::post('sync/from', [SyncStatusController::class, 'syncFrom'])->name('sync.from');
+        Route::post('sync/to', [SyncStatusController::class, 'syncTo'])->name('sync.to');
+        Route::post('sync/retry/{id}', [SyncStatusController::class, 'retry'])->name('sync.retry');
     });
     
     // Kasir routes - read access to destinations, schedules, speedboats, full access to transactions

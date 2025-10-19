@@ -15,7 +15,9 @@ class Speedboat extends Model
         'capacity',
         'type',
         'description',
-        'is_active'
+        'is_active',
+        'woocommerce_product_id',
+        'woocommerce_bus_id'
     ];
 
     protected $casts = [

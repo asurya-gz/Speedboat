@@ -30,4 +30,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'woocommerce' => [
+        'base_url' => env('WOOCOMMERCE_API_URL', 'https://naikspeed.com/wp-json/wc/v3'),
+        'consumer_key' => env('WOOCOMMERCE_CONSUMER_KEY'),
+        'consumer_secret' => env('WOOCOMMERCE_CONSUMER_SECRET'),
+        'sync_interval' => env('WOOCOMMERCE_SYNC_INTERVAL', 5), // minutes
+    ],
+
 ];

@@ -102,6 +102,7 @@
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Kapasitas</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipe</th>
                                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">WooCommerce</th>
                                 @if(Auth::user()->isAdmin())
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-32">Aksi</th>
                                 @endif
@@ -142,6 +143,26 @@
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                                             Nonaktif
                                         </span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($speedboat->woocommerce_product_id && $speedboat->woocommerce_bus_id)
+                                        <div class="flex items-center text-xs">
+                                            <svg class="w-4 h-4 text-green-600 dark:text-green-400 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <div>
+                                                <div class="font-medium text-green-700 dark:text-green-300">Synced</div>
+                                                <div class="text-gray-500 dark:text-gray-400">P:{{ $speedboat->woocommerce_product_id }} / B:{{ $speedboat->woocommerce_bus_id }}</div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="flex items-center text-xs">
+                                            <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <span class="text-gray-600 dark:text-gray-400">Not Mapped</span>
+                                        </div>
                                     @endif
                                 </td>
                                 @if(Auth::user()->isAdmin())

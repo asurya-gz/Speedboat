@@ -124,9 +124,9 @@
                         </svg>
                         Deskripsi
                     </label>
-                    <textarea class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('description') border-red-500 @enderror" 
-                              id="description" 
-                              name="description" 
+                    <textarea class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('description') border-red-500 @enderror"
+                              id="description"
+                              name="description"
                               rows="4"
                               placeholder="Contoh: Speedboat modern dengan AC dan fasilitas lengkap">{{ old('description', $speedboat->description) }}</textarea>
                     @error('description')
@@ -134,6 +134,108 @@
                     @enderror
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Opsional - informasi tambahan tentang speedboat</p>
                 </div>
+
+                <!-- Divider -->
+                <div class="pt-6 border-t border-gray-200 dark:border-gray-600">
+                    <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        WooCommerce Integration (Opsional)
+                    </h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        Isi field di bawah ini jika speedboat ini sudah ada di WooCommerce online. Ini diperlukan untuk sinkronisasi transaksi.
+                    </p>
+                </div>
+
+                <!-- WooCommerce Product ID -->
+                <div>
+                    <label for="woocommerce_product_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <svg class="w-4 h-4 inline text-purple-600 dark:text-purple-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                        </svg>
+                        WooCommerce Product ID
+                    </label>
+                    <input type="number"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('woocommerce_product_id') border-red-500 @enderror"
+                           id="woocommerce_product_id"
+                           name="woocommerce_product_id"
+                           value="{{ old('woocommerce_product_id', $speedboat->woocommerce_product_id) }}"
+                           placeholder="Contoh: 5964"
+                           min="1">
+                    @error('woocommerce_product_id')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        ID Product di WooCommerce (cek di:
+                        <a href="https://naikspeed.com/wp-admin/edit.php?post_type=product" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">
+                            WooCommerce Products
+                            <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
+                    </p>
+                </div>
+
+                <!-- WooCommerce Bus ID -->
+                <div>
+                    <label for="woocommerce_bus_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <svg class="w-4 h-4 inline text-purple-600 dark:text-purple-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 13v-1m4 1v-3m4 3V8M8 21l4-7 4 7M3 4h18M4 4h16v4a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                        </svg>
+                        WooCommerce Bus ID
+                    </label>
+                    <input type="text"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-purple-500 focus:border-purple-500 text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-gray-400 @error('woocommerce_bus_id') border-red-500 @enderror"
+                           id="woocommerce_bus_id"
+                           name="woocommerce_bus_id"
+                           value="{{ old('woocommerce_bus_id', $speedboat->woocommerce_bus_id) }}"
+                           placeholder="Contoh: 64"
+                           maxlength="50">
+                    @error('woocommerce_bus_id')
+                        <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Bus ID dari WooCommerce Bus Booking plugin</p>
+                </div>
+
+                <!-- Auto Sync to WooCommerce -->
+                @if($speedboat->woocommerce_product_id)
+                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <input type="checkbox"
+                               class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 dark:border-gray-600 rounded mt-1"
+                               id="auto_sync_woocommerce"
+                               name="auto_sync_woocommerce"
+                               value="1"
+                               {{ old('auto_sync_woocommerce', true) ? 'checked' : '' }}>
+                        <div class="ml-3">
+                            <label for="auto_sync_woocommerce" class="block text-sm font-medium text-green-900 dark:text-green-100">
+                                <svg class="w-4 h-4 inline text-green-600 dark:text-green-400 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Auto-Sync ke WooCommerce
+                            </label>
+                            <p class="text-xs text-green-700 dark:text-green-300 mt-1">
+                                Centang ini untuk otomatis update product di WooCommerce (Product ID: {{ $speedboat->woocommerce_product_id }}) saat menyimpan perubahan.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                @else
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-medium text-yellow-900 dark:text-yellow-100">Product Belum Terhubung ke WooCommerce</p>
+                            <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                                Isi WooCommerce Product ID di atas untuk mengaktifkan auto-sync, atau buat speedboat baru dengan opsi "Auto-Create Product di WooCommerce".
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                @endif
 
                 <!-- Status Aktif -->
                 <div>

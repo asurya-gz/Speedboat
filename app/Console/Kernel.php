@@ -15,7 +15,17 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Sync from WooCommerce (Online → Offline) every 5 minutes
+        $schedule->command('woocommerce:sync-from --limit=50')
+                 ->everyFiveMinutes()
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Sync to WooCommerce (Offline → Online) every 5 minutes with retry
+        $schedule->command('woocommerce:sync-to --retry')
+                 ->everyFiveMinutes()
+                 ->withoutOverlapping()
+                 ->runInBackground();
     }
 
     /**

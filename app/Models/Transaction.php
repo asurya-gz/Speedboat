@@ -24,7 +24,10 @@ class Transaction extends Model
         'created_by',
         'notes',
         'paid_at',
-        'payment_reference'
+        'payment_reference',
+        'woocommerce_order_id',
+        'synced_at',
+        'sync_error'
     ];
 
     protected $casts = [
@@ -34,7 +37,8 @@ class Transaction extends Model
         'total_amount' => 'decimal:2',
         'is_synced' => 'boolean',
         'paid_at' => 'datetime',
-        'departure_date' => 'date'
+        'departure_date' => 'date',
+        'synced_at' => 'datetime'
     ];
 
     public function schedule()
