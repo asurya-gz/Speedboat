@@ -17,10 +17,9 @@ use Carbon\Carbon;
 class SyncFromWooCommerce extends Command
 {
     protected $signature = 'woocommerce:sync-from
-                            {--since= : Sync orders since this date (Y-m-d)}
-                            {--limit=20 : Number of orders to fetch}';
+                            {--limit=20 : Number of orders to fetch}'; // Opsi 'since' kita hapus
 
-    protected $description = 'Sync orders from WooCommerce to local database';
+    protected $description = 'Sync orders from WooCommerce to local database (Optimized)';
 
     protected $woocommerce;
 
@@ -34,7 +33,7 @@ class SyncFromWooCommerce extends Command
     {
         $this->info('🔄 Starting WooCommerce sync (Online → Offline)...');
 
-        // Check connection first
+        // 1. Cek koneksi
         if (!$this->woocommerce->checkConnection()) {
             $this->error('❌ Cannot connect to WooCommerce API. Check your internet connection.');
             return 1;
@@ -42,19 +41,32 @@ class SyncFromWooCommerce extends Command
 
         $this->info('✅ Connection to WooCommerce established');
 
-        // Prepare query parameters
+        // --- OPTIMASI DIMULAI DISINI ---
+
+        // 2. Dapatkan timestamp 'created_at' dari order terakhir yang berhasil disinkronisasi
+        $lastSyncedTransaction = Transaction::whereNotNull('woocommerce_order_id')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        // 3. Tentukan filter 'after'.
+        // Kita ambil 10 menit *sebelum* order terakhir, untuk keamanan (jaga-jaga ada delay)
+        // Jika DB kosong, kita ambil 1 hari terakhir
+        $syncSince = $lastSyncedTransaction
+            ? Carbon::parse($lastSyncedTransaction->created_at)->subMinutes(10)->toIso8601String()
+            : Carbon::now()->subDay()->toIso8601String();
+
+        // 4. Siapkan parameter query
         $params = [
             'per_page' => $this->option('limit'),
             'orderby' => 'date',
-            'order' => 'desc'
+            'order' => 'asc', // PENTING: Ubah ke 'asc' (ascending) agar diproses berurutan
+            'after' => $syncSince // INI KUNCINYA: Hanya ambil order SETELAH tanggal ini
         ];
 
-        if ($this->option('since')) {
-            $params['after'] = Carbon::parse($this->option('since'))->toIso8601String();
-        }
+        // --- OPTIMASI SELESAI ---
 
-        // Fetch orders from WooCommerce
-        $this->info('📥 Fetching orders from WooCommerce...');
+        // 5. Ambil data order dari WooCommerce
+        $this->info("📥 Fetching new orders created after: {$syncSince}");
         $response = $this->woocommerce->getOrders($params);
 
         if (!$response['success']) {
@@ -64,15 +76,16 @@ class SyncFromWooCommerce extends Command
 
         $orders = $response['data'];
         $ordersCount = is_array($orders) ? count($orders) : $orders->count();
-        $this->info("Found {$ordersCount} orders to process");
+        $this->info("Found {$ordersCount} new orders to process");
 
         $synced = 0;
         $skipped = 0;
         $errors = 0;
 
+        // 6. Loop dan proses order (LOGIKA INI SEMUA TETAP SAMA)
         foreach ($orders as $order) {
             try {
-                // Skip if already synced
+                // Skip jika sudah ada (sebagai pengaman tambahan)
                 if (Transaction::where('woocommerce_order_id', $order['id'])->exists()) {
                     $this->line("⏭️  Order #{$order['id']} already exists locally, skipping...");
                     $skipped++;
@@ -135,8 +148,21 @@ class SyncFromWooCommerce extends Command
         return 0;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | FUNGSI HELPER (TIDAK BERUBAH)
+    |--------------------------------------------------------------------------
+    */
+
     protected function findOrCreateSchedule($parsedData)
     {
+        // Periksa apakah 'speedboat_name' ada di data.
+        if (!isset($parsedData['speedboat_name']) || empty($parsedData['speedboat_name'])) {
+            $this->warn("⚠️  'speedboat_name' key is missing from parsed data. Skipping this order.");
+            return null; // Lewati order ini
+        }
+        // --- PERBAIKAN SELESAI ---
+
         // Find speedboat by name or WooCommerce bus ID
         $speedboat = Speedboat::where('name', $parsedData['speedboat_name'])
             ->orWhere('woocommerce_bus_id', $parsedData['woocommerce_bus_id'])

@@ -27,7 +27,7 @@ class WooCommerceService
             $url = $this->baseUrl . $endpoint;
 
             $response = Http::withBasicAuth($this->consumerKey, $this->consumerSecret)
-                ->timeout(30)
+                        ->timeout(30)
                 ->{$method}($url, $data);
 
             if ($response->successful()) {
@@ -141,18 +141,30 @@ class WooCommerceService
                 throw new \Exception('No line items in order');
             }
 
+            // --- PERBAIKAN DIMULAI DISINI ---
+            // Cek apakah key 'name' ada. Jika tidak, lempar error yang jelas
+            // atau berikan nilai default.
+            if (!isset($lineItem['name']) || empty($lineItem['name'])) {
+                // Opsi 1: Beri nama default
+                // $speedboatName = 'N/A'; 
+
+                // Opsi 2: Lempar error yang lebih jelas (lebih direkomendasikan)
+                throw new \Exception("Line item #{$lineItem['id']} from order #{$order['id']} is missing a 'name' (product title).");
+            }
+            // --- PERBAIKAN SELESAI ---
+
             // Extract metadata
             $metaData = collect($lineItem['meta_data']);
 
             // Parse boarding location and time
             $boardingValue = $this->getMetaValue($metaData, 'Boarding')
-                          ?? $this->getMetaValue($metaData, '_wbtm_bp');
+                ?? $this->getMetaValue($metaData, '_wbtm_bp');
             $droppingValue = $this->getMetaValue($metaData, 'Dropping')
-                          ?? $this->getMetaValue($metaData, '_wbtm_dp');
+                ?? $this->getMetaValue($metaData, '_wbtm_dp');
             $boardingTime = $this->getMetaValue($metaData, '_wbtm_bp_time');
             $droppingTime = $this->getMetaValue($metaData, '_wbtm_dp_time');
 
-            // Parse boarding string: "TANJUNG SELOR, Pelabuhan Kayan II(19/10/2025  06:50)"
+            // Parse boarding string: "TANJUNG SELOR, Pelabuhan Kayan II(19/10/2025 06:50)"
             if ($boardingValue && preg_match('/^(.*?)\((\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})\)/', $boardingValue, $matches)) {
                 $departureLocation = trim($matches[1]);
                 $departureDate = \Carbon\Carbon::createFromFormat('d/m/Y', $matches[2])->format('Y-m-d');
@@ -204,7 +216,7 @@ class WooCommerceService
 
             return [
                 'woocommerce_order_id' => $order['id'],
-                'speedboat_name' => $lineItem['name'],
+                'speedboat_name' => $lineItem['name'], // Sekarang kita tahu 'name' pasti ada
                 'woocommerce_bus_id' => $busId,
                 'departure_location' => $departureLocation,
                 'destination_location' => $destinationLocation,
