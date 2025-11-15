@@ -10,6 +10,7 @@ use App\Models\Schedule;
 use App\Models\Speedboat;
 use App\Models\Destination;
 use App\Models\SeatBooking;
+use App\Models\SyncLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -42,6 +43,13 @@ class SyncFromWooCommerce extends Command
 
         $this->info('✅ Connection to WooCommerce established');
 
+        // First, sync master data (speedboats, destinations, schedules)
+        $this->newLine();
+        $this->info('📦 Step 1: Syncing master data...');
+        $this->call('woocommerce:sync-master-data');
+        $this->newLine();
+        $this->info('📋 Step 2: Syncing transactions...');
+
         // Prepare query parameters
         $params = [
             'per_page' => $this->option('limit'),
@@ -71,6 +79,14 @@ class SyncFromWooCommerce extends Command
         $errors = 0;
 
         foreach ($orders as $order) {
+            $startTime = microtime(true);
+            $logData = [
+                'sync_type' => 'sync_from',
+                'entity_type' => 'transaction',
+                'trigger_source' => 'auto',
+                'woocommerce_id' => $order['id'],
+            ];
+
             try {
                 // Skip if already synced
                 if (Transaction::where('woocommerce_order_id', $order['id'])->exists()) {
@@ -102,6 +118,13 @@ class SyncFromWooCommerce extends Command
 
                     DB::commit();
 
+                    // Log success
+                    SyncLog::createLog(array_merge($logData, [
+                        'status' => 'success',
+                        'entity_id' => $transaction->id,
+                        'duration_seconds' => microtime(true) - $startTime,
+                    ]));
+
                     $this->info("✅ Successfully synced order #{$order['id']} → Transaction #{$transaction->transaction_code}");
                     $synced++;
 
@@ -112,6 +135,14 @@ class SyncFromWooCommerce extends Command
 
             } catch (\Exception $e) {
                 $this->error("❌ Error processing order #{$order['id']}: " . $e->getMessage());
+
+                // Log failure
+                SyncLog::createLog(array_merge($logData, [
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'duration_seconds' => microtime(true) - $startTime,
+                ]));
+
                 Log::error('Sync from WooCommerce failed', [
                     'order_id' => $order['id'],
                     'error' => $e->getMessage(),
@@ -243,17 +274,169 @@ class SyncFromWooCommerce extends Command
     protected function createSeatBookings($parsedData, $transaction, $schedule)
     {
         $seatMap = $parsedData['seat_passenger_map'] ?? [];
+        $requiredSeats = count($seatMap);
 
-        foreach ($seatMap as $seatIndex => $passengerName) {
+        // Get already booked seats for this schedule and date
+        $bookedSeats = SeatBooking::where('schedule_id', $schedule->id)
+            ->where('departure_date', $parsedData['departure_date'])
+            ->pluck('seat_number')
+            ->toArray();
+
+        // DYNAMIC: Get seat format from existing bookings or generate based on capacity
+        $availableSeats = $this->generateAvailableSeats($schedule, $bookedSeats);
+
+        // VALIDATION: Check if we have enough available seats
+        if (count($availableSeats) < $requiredSeats) {
+            $availableCount = count($availableSeats);
+            throw new \Exception(
+                "Insufficient seats available. Required: {$requiredSeats}, Available: {$availableCount} " .
+                "for schedule #{$schedule->id} on {$parsedData['departure_date']}"
+            );
+        }
+
+        $seatIndex = 0;
+        foreach ($seatMap as $passengerIndex => $passengerName) {
+            // Auto-assign from available seats (prioritize front seats)
+            $assignedSeat = $availableSeats[$seatIndex];
+            $seatIndex++;
+
             SeatBooking::create([
                 'schedule_id' => $schedule->id,
                 'departure_date' => $parsedData['departure_date'],
-                'seat_number' => $seatIndex,
+                'seat_number' => $assignedSeat,
                 'transaction_id' => $transaction->id,
                 'passenger_name' => $passengerName,
                 'passenger_type' => $parsedData['passenger_type'],
                 'status' => 'booked'
             ]);
+
+            // Add to booked seats to avoid duplicate in same batch
+            $bookedSeats[] = $assignedSeat;
         }
+
+        $this->info("✅ Assigned seats: " . implode(', ', array_slice($availableSeats, 0, $requiredSeats)));
+    }
+
+    /**
+     * Generate available seats based on existing seat format pattern in database
+     * This auto-detects seat format (A1, AA1, 1A, etc) from existing bookings
+     * Returns seats in order from front to back
+     */
+    protected function generateAvailableSeats($schedule, $bookedSeats)
+    {
+        // Get existing seat numbers from any booking in the system for pattern detection
+        $existingSeats = SeatBooking::where('schedule_id', $schedule->id)
+            ->limit(50)
+            ->pluck('seat_number')
+            ->toArray();
+
+        // If no existing bookings, check for same speedboat on different dates
+        if (empty($existingSeats)) {
+            $existingSeats = SeatBooking::whereHas('schedule', function($q) use ($schedule) {
+                $q->where('speedboat_id', $schedule->speedboat_id);
+            })
+            ->limit(50)
+            ->pluck('seat_number')
+            ->toArray();
+        }
+
+        $availableSeats = [];
+        $capacity = $schedule->capacity ?? 50;
+
+        if (!empty($existingSeats)) {
+            // Detect pattern from existing seats
+            $pattern = $this->detectSeatPattern($existingSeats);
+
+            if ($pattern['type'] === 'alphanumeric') {
+                // Pattern like A1, A2, B1, B2, or custom like ASS1, AX1, etc
+                $rows = $pattern['rows'];
+                $maxCol = $pattern['maxCol'];
+
+                // Generate seats row by row, column by column (A1, A2, A3... B1, B2, B3...)
+                foreach ($rows as $row) {
+                    for ($col = 1; $col <= $maxCol; $col++) {
+                        $seat = $row . $col;
+                        if (!in_array($seat, $bookedSeats)) {
+                            $availableSeats[] = $seat;
+                        }
+
+                        // Stop if we have enough seats
+                        if (count($availableSeats) >= $capacity) {
+                            break 2;
+                        }
+                    }
+                }
+            } else {
+                // Numeric pattern: 1, 2, 3, 4...
+                for ($i = 1; $i <= $capacity; $i++) {
+                    $seat = (string)$i;
+                    if (!in_array($seat, $bookedSeats)) {
+                        $availableSeats[] = $seat;
+                    }
+                }
+            }
+        } else {
+            // No pattern found, use default A1-A5, B1-B5 format (5 seats per row)
+            $rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
+            $colsPerRow = 5;
+
+            foreach ($rows as $row) {
+                for ($col = 1; $col <= $colsPerRow; $col++) {
+                    $seat = $row . $col;
+                    if (!in_array($seat, $bookedSeats)) {
+                        $availableSeats[] = $seat;
+                    }
+
+                    // Stop if we have enough seats
+                    if (count($availableSeats) >= $capacity) {
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        return $availableSeats;
+    }
+
+    /**
+     * Detect seat numbering pattern from existing seat numbers
+     */
+    protected function detectSeatPattern($seatNumbers)
+    {
+        $pattern = [
+            'type' => 'alphanumeric',
+            'rows' => [],
+            'maxCol' => 5
+        ];
+
+        $rows = [];
+        $maxCol = 0;
+
+        foreach ($seatNumbers as $seat) {
+            // Check if alphanumeric (A1, B2, AA1, etc)
+            if (preg_match('/^([A-Z]+)(\d+)$/', $seat, $matches)) {
+                $row = $matches[1];
+                $col = (int)$matches[2];
+
+                if (!in_array($row, $rows)) {
+                    $rows[] = $row;
+                }
+
+                if ($col > $maxCol) {
+                    $maxCol = $col;
+                }
+            } elseif (ctype_digit($seat)) {
+                // Numeric only
+                $pattern['type'] = 'numeric';
+            }
+        }
+
+        // Sort rows alphabetically
+        sort($rows);
+
+        $pattern['rows'] = $rows;
+        $pattern['maxCol'] = $maxCol > 0 ? $maxCol : 5;
+
+        return $pattern;
     }
 }

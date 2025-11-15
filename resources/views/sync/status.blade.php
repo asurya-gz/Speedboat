@@ -30,13 +30,22 @@
                     </div>
                 @endif
             </div>
-            @if($lastSyncTime)
             <div class="text-right">
-                <p class="text-sm text-gray-600 dark:text-gray-400">Last Sync</p>
-                <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ $lastSyncTime->diffForHumans() }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-500">{{ $lastSyncTime->format('d/m/Y H:i') }}</p>
+                @if($lastSyncTime)
+                <div class="mb-3">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Last Successful Sync</p>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ $lastSyncTime->diffForHumans() }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-500">{{ $lastSyncTime->format('d/m/Y H:i') }}</p>
+                </div>
+                @endif
+                @if($lastSyncAttemptTime)
+                <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Last Sync Attempt</p>
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $lastSyncAttemptTime->diffForHumans() }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-500">{{ $lastSyncAttemptTime->format('d/m/Y H:i') }}</p>
+                </div>
+                @endif
             </div>
-            @endif
         </div>
     </div>
 
@@ -362,22 +371,29 @@ async function syncFrom() {
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             }
         });
 
         const data = await response.json();
 
-        if (data.success) {
-            showNotification('Sync from WooCommerce completed successfully', 'success');
-            setTimeout(() => location.reload(), 1500);
+        hideLoading();
+
+        if (response.ok && data.success) {
+            const stats = data.stats || {};
+            const message = `Sync completed!\nSynced: ${stats.synced || 0}\nSkipped: ${stats.skipped || 0}\nErrors: ${stats.errors || 0}`;
+
+            showNotification(message, 'success');
+            setTimeout(() => location.reload(), 2000);
         } else {
-            showNotification('Sync failed: ' + data.message, 'error');
+            showNotification('Sync failed: ' + (data.message || 'Unknown error'), 'error');
+            console.error('Sync error:', data);
         }
     } catch (error) {
-        showNotification('Error: ' + error.message, 'error');
-    } finally {
         hideLoading();
+        showNotification('Network error: ' + error.message, 'error');
+        console.error('Fetch error:', error);
     }
 }
 

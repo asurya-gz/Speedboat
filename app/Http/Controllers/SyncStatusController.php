@@ -30,12 +30,16 @@ class SyncStatusController extends Controller
         // Get total transactions
         $totalTransactions = Transaction::count();
 
-        // Get last sync time
+        // Get last successful sync time (when data was actually synced)
         $lastSyncTransaction = Transaction::where('is_synced', true)
             ->whereNotNull('synced_at')
             ->orderBy('synced_at', 'desc')
             ->first();
         $lastSyncTime = $lastSyncTransaction ? $lastSyncTransaction->synced_at : null;
+
+        // Get last sync attempt time (from SyncLog - shows scheduler activity)
+        $lastSyncAttempt = SyncLog::orderBy('created_at', 'desc')->first();
+        $lastSyncAttemptTime = $lastSyncAttempt ? $lastSyncAttempt->created_at : null;
 
         // Get failed transactions
         $failedTransactions = Transaction::whereNotNull('sync_error')
@@ -74,6 +78,7 @@ class SyncStatusController extends Controller
             'failedCount',
             'totalTransactions',
             'lastSyncTime',
+            'lastSyncAttemptTime',
             'failedTransactions',
             'recentSynced',
             'pendingTransactions',
@@ -86,15 +91,43 @@ class SyncStatusController extends Controller
     public function syncFrom()
     {
         try {
-            Artisan::call('woocommerce:sync-from', ['--limit' => 20]);
+            // Clear Laravel log to capture only this sync
+            $exitCode = Artisan::call('woocommerce:sync-from', ['--limit' => 20]);
             $output = Artisan::output();
+
+            // Parse output to get sync summary
+            $synced = 0;
+            $skipped = 0;
+            $errors = 0;
+
+            if (preg_match('/Synced\s+\|\s+(\d+)/', $output, $matches)) {
+                $synced = (int) $matches[1];
+            }
+            if (preg_match('/Skipped\s+\|\s+(\d+)/', $output, $matches)) {
+                $skipped = (int) $matches[1];
+            }
+            if (preg_match('/Errors\s+\|\s+(\d+)/', $output, $matches)) {
+                $errors = (int) $matches[1];
+            }
+
+            $message = "Sync completed: {$synced} synced, {$skipped} skipped, {$errors} errors";
 
             return response()->json([
                 'success' => true,
-                'message' => 'Sync from WooCommerce completed',
-                'output' => $output
+                'message' => $message,
+                'output' => $output,
+                'stats' => [
+                    'synced' => $synced,
+                    'skipped' => $skipped,
+                    'errors' => $errors
+                ]
             ]);
         } catch (\Exception $e) {
+            \Log::error('Sync from WooCommerce UI failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Sync failed: ' . $e->getMessage()

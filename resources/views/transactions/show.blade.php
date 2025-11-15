@@ -319,10 +319,12 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    {{ $ticket->passenger_type === 'adult' ? 'bg-blue-100 text-blue-800' : 
-                                       ($ticket->passenger_type === 'child' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800') }}">
-                                    {{ $ticket->passenger_type === 'adult' ? 'Dewasa' : 
-                                       ($ticket->passenger_type === 'child' ? 'Anak' : 'Balita') }}
+                                    {{ $ticket->passenger_type === 'adult' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                                       ($ticket->passenger_type === 'child' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                       ($ticket->passenger_type === 'toddler' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200')) }}">
+                                    {{ $ticket->passenger_type === 'adult' ? 'Dewasa' :
+                                       ($ticket->passenger_type === 'child' ? 'Anak' :
+                                       ($ticket->passenger_type === 'toddler' ? 'Balita' : 'Unknown')) }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">

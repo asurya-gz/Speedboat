@@ -225,6 +225,9 @@ class TransactionController extends Controller
 
             DB::commit();
 
+            // Trigger event for real-time sync to WooCommerce
+            event(new \App\Events\TransactionCreated($transaction));
+
             return redirect()->route('transactions.show', $transaction)
                 ->with('success', 'Transaction created successfully!');
 
