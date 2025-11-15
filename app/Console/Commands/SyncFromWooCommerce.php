@@ -10,6 +10,7 @@ use App\Models\Schedule;
 use App\Models\Speedboat;
 use App\Models\Destination;
 use App\Models\SeatBooking;
+use App\Models\SyncLog; // Dipertahankan dari kode baru
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -17,7 +18,7 @@ use Carbon\Carbon;
 class SyncFromWooCommerce extends Command
 {
     protected $signature = 'woocommerce:sync-from
-                            {--limit=20 : Number of orders to fetch}'; // Opsi 'since' kita hapus
+                            {--limit=20 : Number of orders to fetch}';
 
     protected $description = 'Sync orders from WooCommerce to local database (Optimized)';
 
@@ -41,7 +42,15 @@ class SyncFromWooCommerce extends Command
 
         $this->info('✅ Connection to WooCommerce established');
 
+        // First, sync master data (speedboats, destinations, schedules)
+        $this->newLine();
+        $this->info('📦 Step 1: Syncing master data...');
+        $this->call('woocommerce:sync-master-data'); // Dipertahankan dari kode baru
+        $this->newLine();
+        $this->info('📋 Step 2: Syncing transactions...');
+
         // --- OPTIMASI DIMULAI DISINI ---
+        // (Ini adalah logika yang kita tambahkan kembali)
 
         // 2. Dapatkan timestamp 'created_at' dari order terakhir yang berhasil disinkronisasi
         $lastSyncedTransaction = Transaction::whereNotNull('woocommerce_order_id')
@@ -55,15 +64,15 @@ class SyncFromWooCommerce extends Command
             ? Carbon::parse($lastSyncedTransaction->created_at)->subMinutes(10)->toIso8601String()
             : Carbon::now()->subDay()->toIso8601String();
 
+        // --- OPTIMASI SELESAI ---
+
         // 4. Siapkan parameter query
         $params = [
             'per_page' => $this->option('limit'),
             'orderby' => 'date',
-            'order' => 'asc', // PENTING: Ubah ke 'asc' (ascending) agar diproses berurutan
+            'order' => 'asc', // PENTING: 'asc' (ascending) agar diproses berurutan
             'after' => $syncSince // INI KUNCINYA: Hanya ambil order SETELAH tanggal ini
         ];
-
-        // --- OPTIMASI SELESAI ---
 
         // 5. Ambil data order dari WooCommerce
         $this->info("📥 Fetching new orders created after: {$syncSince}");
@@ -82,8 +91,16 @@ class SyncFromWooCommerce extends Command
         $skipped = 0;
         $errors = 0;
 
-        // 6. Loop dan proses order (LOGIKA INI SEMUA TETAP SAMA)
+        // 6. Loop dan proses order
         foreach ($orders as $order) {
+            $startTime = microtime(true);
+            $logData = [ // Dipertahankan dari kode baru (SyncLog)
+                'sync_type' => 'sync_from',
+                'entity_type' => 'transaction',
+                'trigger_source' => 'auto',
+                'woocommerce_id' => $order['id'],
+            ];
+
             try {
                 // Skip jika sudah ada (sebagai pengaman tambahan)
                 if (Transaction::where('woocommerce_order_id', $order['id'])->exists()) {
@@ -101,6 +118,7 @@ class SyncFromWooCommerce extends Command
                 $schedule = $this->findOrCreateSchedule($parsedData);
 
                 if (!$schedule) {
+                    // Logika 'safety check' ini sudah ada di file baru Anda, jadi kita pertahankan
                     $this->warn("⚠️  Could not match schedule for order #{$order['id']}, skipping...");
                     $skipped++;
                     continue;
@@ -111,9 +129,18 @@ class SyncFromWooCommerce extends Command
                 try {
                     $transaction = $this->createTransaction($parsedData, $schedule, $order['id']);
                     $this->createTickets($parsedData, $transaction, $schedule, $order);
+
+                    // Memanggil fungsi createSeatBookings yang baru (lebih canggih)
                     $this->createSeatBookings($parsedData, $transaction, $schedule);
 
                     DB::commit();
+
+                    // Log success (Dipertahankan dari kode baru)
+                    SyncLog::createLog(array_merge($logData, [
+                        'status' => 'success',
+                        'entity_id' => $transaction->id,
+                        'duration_seconds' => microtime(true) - $startTime,
+                    ]));
 
                     $this->info("✅ Successfully synced order #{$order['id']} → Transaction #{$transaction->transaction_code}");
                     $synced++;
@@ -125,6 +152,14 @@ class SyncFromWooCommerce extends Command
 
             } catch (\Exception $e) {
                 $this->error("❌ Error processing order #{$order['id']}: " . $e->getMessage());
+
+                // Log failure (Dipertahankan dari kode baru)
+                SyncLog::createLog(array_merge($logData, [
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'duration_seconds' => microtime(true) - $startTime,
+                ]));
+
                 Log::error('Sync from WooCommerce failed', [
                     'order_id' => $order['id'],
                     'error' => $e->getMessage(),
@@ -150,18 +185,21 @@ class SyncFromWooCommerce extends Command
 
     /*
     |--------------------------------------------------------------------------
-    | FUNGSI HELPER (TIDAK BERUBAH)
+    | FUNGSI HELPER
     |--------------------------------------------------------------------------
+    |
+    | Fungsi di bawah ini dipertahankan dari kode baru yang Anda berikan
+    | (termasuk 'safety check' dan logika 'createSeatBookings' yang baru)
+    |
     */
 
     protected function findOrCreateSchedule($parsedData)
     {
-        // Periksa apakah 'speedboat_name' ada di data.
+        // Periksa apakah 'speedboat_name' ada di data. (Ini adalah 'safety check' kita)
         if (!isset($parsedData['speedboat_name']) || empty($parsedData['speedboat_name'])) {
             $this->warn("⚠️  'speedboat_name' key is missing from parsed data. Skipping this order.");
             return null; // Lewati order ini
         }
-        // --- PERBAIKAN SELESAI ---
 
         // Find speedboat by name or WooCommerce bus ID
         $speedboat = Speedboat::where('name', $parsedData['speedboat_name'])
@@ -236,7 +274,7 @@ class SyncFromWooCommerce extends Command
 
         for ($i = 0; $i < $ticketCount; $i++) {
             $passengerName = $seatMap[$i + 1] ?? $parsedData['passenger_name'];
-            $seatNumber = array_keys($seatMap)[$i] ?? null;
+            $seatNumber = array_keys($seatMap)[$i] ?? null; // KODE ASLI - TIDAK KITA PAKAI KARENA LOGIKA BARU
 
             $ticketCode = "WC-{$order['id']}-" . str_pad($i + 1, 3, '0', STR_PAD_LEFT);
 
@@ -246,7 +284,7 @@ class SyncFromWooCommerce extends Command
                 'woocommerce_order_id' => $order['id'],
                 'schedule_id' => $schedule->id,
                 'passenger_type' => $parsedData['passenger_type'],
-                'seat_number' => $seatNumber,
+                'seat_number' => null, // Dikosongkan, akan diisi oleh createSeatBookings
                 'destination' => $schedule->destination->departure_location . ' → ' . $schedule->destination->destination_location
             ]);
 
@@ -259,27 +297,199 @@ class SyncFromWooCommerce extends Command
                 'price' => $parsedData['ticket_price'],
                 'qr_code' => $qrData,
                 'status' => 'active',
-                'seat_number' => $seatNumber,
+                'seat_number' => null, // Dikosongkan, akan diisi oleh createSeatBookings
                 'is_synced' => true,
                 'synced_at' => now()
             ]);
         }
     }
 
+    // Ini adalah FUNGSI BARU dari teman Anda (Dipertahankan)
     protected function createSeatBookings($parsedData, $transaction, $schedule)
     {
         $seatMap = $parsedData['seat_passenger_map'] ?? [];
+        $requiredSeats = count($seatMap);
 
-        foreach ($seatMap as $seatIndex => $passengerName) {
+        // Jika seatMap kosong (mungkin dari order lama), gunakan total count
+        if ($requiredSeats == 0) {
+            $requiredSeats = $parsedData['adult_count'] + $parsedData['toddler_count'];
+        }
+
+        // Buat nama penumpang placeholder jika seatMap tidak ada
+        $passengers = [];
+        if (empty($seatMap)) {
+            for ($i = 0; $i < $requiredSeats; $i++) {
+                $passengers[] = $parsedData['passenger_name'] . ($i > 0 ? ' (' . ($i + 1) . ')' : '');
+            }
+        } else {
+            $passengers = array_values($seatMap);
+        }
+
+        // Get already booked seats for this schedule and date
+        $bookedSeats = SeatBooking::where('schedule_id', $schedule->id)
+            ->where('departure_date', $parsedData['departure_date'])
+            ->pluck('seat_number')
+            ->toArray();
+
+        // DYNAMIC: Get seat format from existing bookings or generate based on capacity
+        $availableSeats = $this->generateAvailableSeats($schedule, $bookedSeats);
+
+        // VALIDATION: Check if we have enough available seats
+        if (count($availableSeats) < $requiredSeats) {
+            $availableCount = count($availableSeats);
+            throw new \Exception(
+                "Insufficient seats available. Required: {$requiredSeats}, Available: {$availableCount} " .
+                "for schedule #{$schedule->id} on {$parsedData['departure_date']}"
+            );
+        }
+
+        $assignedSeatNumbers = [];
+
+        foreach ($passengers as $index => $passengerName) {
+            // Auto-assign from available seats (prioritize front seats)
+            $assignedSeat = $availableSeats[$index];
+            $assignedSeatNumbers[] = $assignedSeat;
+
             SeatBooking::create([
                 'schedule_id' => $schedule->id,
                 'departure_date' => $parsedData['departure_date'],
-                'seat_number' => $seatIndex,
+                'seat_number' => $assignedSeat,
                 'transaction_id' => $transaction->id,
                 'passenger_name' => $passengerName,
                 'passenger_type' => $parsedData['passenger_type'],
                 'status' => 'booked'
             ]);
+
+            // Add to booked seats to avoid duplicate in same batch
+            $bookedSeats[] = $assignedSeat;
         }
+
+        // Update tickets with assigned seat numbers
+        $tickets = $transaction->tickets()->get();
+        foreach ($tickets as $i => $ticket) {
+            if (isset($assignedSeatNumbers[$i])) {
+                $ticket->update(['seat_number' => $assignedSeatNumbers[$i]]);
+                // Anda juga bisa update QR code di sini jika perlu
+            }
+        }
+
+        $this->info("✅ Assigned seats: " . implode(', ', $assignedSeatNumbers));
+    }
+
+    // Ini adalah FUNGSI BARU dari teman Anda (Dipertahankan)
+    protected function generateAvailableSeats($schedule, $bookedSeats)
+    {
+        // Get existing seat numbers from any booking in the system for pattern detection
+        $existingSeats = SeatBooking::where('schedule_id', $schedule->id)
+            ->limit(50)
+            ->pluck('seat_number')
+            ->toArray();
+
+        // If no existing bookings, check for same speedboat on different dates
+        if (empty($existingSeats)) {
+            $existingSeats = SeatBooking::whereHas('schedule', function ($q) use ($schedule) {
+                $q->where('speedboat_id', $schedule->speedboat_id);
+            })
+                ->limit(50)
+                ->pluck('seat_number')
+                ->toArray();
+        }
+
+        $availableSeats = [];
+        $capacity = $schedule->capacity ?? 50;
+
+        if (!empty($existingSeats)) {
+            // Detect pattern from existing seats
+            $pattern = $this->detectSeatPattern($existingSeats);
+
+            if ($pattern['type'] === 'alphanumeric') {
+                // Pattern like A1, A2, B1, B2, or custom like ASS1, AX1, etc
+                $rows = $pattern['rows'];
+                $maxCol = $pattern['maxCol'];
+
+                // Generate seats row by row, column by column (A1, A2, A3... B1, B2, B3...)
+                foreach ($rows as $row) {
+                    for ($col = 1; $col <= $maxCol; $col++) {
+                        $seat = $row . $col;
+                        if (!in_array($seat, $bookedSeats)) {
+                            $availableSeats[] = $seat;
+                        }
+
+                        // Stop if we have enough seats
+                        if (count($availableSeats) >= $capacity) {
+                            break 2;
+                        }
+                    }
+                }
+            } else {
+                // Numeric pattern: 1, 2, 3, 4...
+                for ($i = 1; $i <= $capacity; $i++) {
+                    $seat = (string) $i;
+                    if (!in_array($seat, $bookedSeats)) {
+                        $availableSeats[] = $seat;
+                    }
+                }
+            }
+        } else {
+            // No pattern found, use default A1-A5, B1-B5 format (5 seats per row)
+            $rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
+            $colsPerRow = 5;
+
+            foreach ($rows as $row) {
+                for ($col = 1; $col <= $colsPerRow; $col++) {
+                    $seat = $row . $col;
+                    if (!in_array($seat, $bookedSeats)) {
+                        $availableSeats[] = $seat;
+                    }
+
+                    // Stop if we have enough seats
+                    if (count($availableSeats) >= $capacity) {
+                        break 2;
+                    }
+                }
+            }
+        }
+
+        return $availableSeats;
+    }
+
+    // Ini adalah FUNGSI BARU dari teman Anda (Dipertahankan)
+    protected function detectSeatPattern($seatNumbers)
+    {
+        $pattern = [
+            'type' => 'alphanumeric',
+            'rows' => [],
+            'maxCol' => 5
+        ];
+
+        $rows = [];
+        $maxCol = 0;
+
+        foreach ($seatNumbers as $seat) {
+            // Check if alphanumeric (A1, B2, AA1, etc)
+            if (preg_match('/^([A-Z]+)(\d+)$/', $seat, $matches)) {
+                $row = $matches[1];
+                $col = (int) $matches[2];
+
+                if (!in_array($row, $rows)) {
+                    $rows[] = $row;
+                }
+
+                if ($col > $maxCol) {
+                    $maxCol = $col;
+                }
+            } elseif (ctype_digit($seat)) {
+                // Numeric only
+                $pattern['type'] = 'numeric';
+            }
+        }
+
+        // Sort rows alphabetically
+        sort($rows);
+
+        $pattern['rows'] = $rows;
+        $pattern['maxCol'] = $maxCol > 0 ? $maxCol : 5;
+
+        return $pattern;
     }
 }

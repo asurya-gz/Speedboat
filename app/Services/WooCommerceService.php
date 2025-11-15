@@ -214,6 +214,16 @@ class WooCommerceService
             // Get bus/speedboat ID
             $busId = $this->getMetaValue($metaData, '_wbtm_bus_id');
 
+            // Map WooCommerce ticket_type to our passenger_type
+            // WooCommerce: "0" = Dewasa (Adult), "1" = Anak (Child), "2" = Balita (Toddler)
+            $ticketType = $ticketInfo['ticket_type'] ?? '0';
+            $passengerType = 'adult'; // default
+            if ($ticketType === '1') {
+                $passengerType = 'child';
+            } elseif ($ticketType === '2') {
+                $passengerType = 'toddler';
+            }
+
             return [
                 'woocommerce_order_id' => $order['id'],
                 'speedboat_name' => $lineItem['name'], // Sekarang kita tahu 'name' pasti ada
@@ -228,7 +238,7 @@ class WooCommerceService
                 'adult_count' => $ticketInfo['ticket_qty'] ?? 1,
                 'child_count' => 0,
                 'toddler_count' => 0,
-                'total_amount' => $order['total'],
+                'total_amount' => $lineItem['total'], // Use line item total, not order total (which includes fees)
                 'payment_method' => $order['payment_method'],
                 'payment_status' => $order['status'] === 'completed' ? 'paid' : 'pending',
                 'paid_at' => $order['date_paid'] ? \Carbon\Carbon::parse($order['date_paid']) : null,
@@ -236,7 +246,7 @@ class WooCommerceService
                 'seat_passenger_map' => $seatPassengerMap,
                 'line_item_id' => $lineItem['id'],
                 'ticket_price' => $ticketInfo['ticket_price'] ?? $lineItem['total'],
-                'passenger_type' => $ticketInfo['ticket_type'] ?? 'adult'
+                'passenger_type' => $passengerType
             ];
 
         } catch (\Exception $e) {
@@ -281,8 +291,26 @@ class WooCommerceService
 
         // Find WooCommerce product ID for this speedboat
         $productId = $speedboat->woocommerce_product_id;
+
+        // If speedboat doesn't have product mapping, try to find a product from WooCommerce
         if (!$productId) {
-            throw new \Exception("Speedboat {$speedboat->name} does not have WooCommerce product mapping");
+            \Log::warning("Speedboat {$speedboat->name} does not have WooCommerce product mapping, trying to find product...");
+
+            // Try to find product by speedboat name
+            $productsResponse = $this->getProducts(['search' => $speedboat->name, 'per_page' => 1]);
+
+            if ($productsResponse['success'] && !empty($productsResponse['data'])) {
+                $product = $productsResponse['data'][0];
+                $productId = $product['id'];
+
+                // Update speedboat with found product ID
+                $speedboat->update(['woocommerce_product_id' => $productId]);
+                \Log::info("Found and mapped product ID {$productId} for speedboat {$speedboat->name}");
+            } else {
+                // Use a default generic product ID (you can change this)
+                // Or throw error if you want strict validation
+                throw new \Exception("Speedboat {$speedboat->name} does not have WooCommerce product mapping and no matching product found in WooCommerce");
+            }
         }
 
         $departureTimeStr = \Carbon\Carbon::parse($schedule->departure_time)->format('H:i');

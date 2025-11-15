@@ -15,14 +15,21 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Sync from WooCommerce (Online → Offline) every 5 minutes
+        // Sync from WooCommerce (Online → Offline) every 1 minute for near real-time
         $schedule->command('woocommerce:sync-from --limit=50')
-                 ->everyFiveMinutes()
+                 ->everyMinute()
                  ->withoutOverlapping()
                  ->runInBackground();
 
-        // Sync to WooCommerce (Offline → Online) every 5 minutes with retry
+        // Sync to WooCommerce (Offline → Online) every 1 minute as backup
+        // (Real-time sync happens via Event Listener, this is for retry failed syncs)
         $schedule->command('woocommerce:sync-to --retry')
+                 ->everyMinute()
+                 ->withoutOverlapping()
+                 ->runInBackground();
+
+        // Sync master data every 5 minutes (tidak perlu sering)
+        $schedule->command('woocommerce:sync-master-data')
                  ->everyFiveMinutes()
                  ->withoutOverlapping()
                  ->runInBackground();
