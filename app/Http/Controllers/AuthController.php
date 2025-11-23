@@ -57,7 +57,15 @@ class AuthController extends Controller
                 return redirect()->route('password.change.form')->with('info', 'Anda harus mengganti password sebelum melanjutkan.');
             }
             
-            return redirect()->intended('dashboard');
+            if (in_array($user->role, [User::ROLE_ADMIN, User::ROLE_KASIR])) {
+                $defaultRedirect = route('transactions.create');
+            } elseif ($user->role === User::ROLE_BOARDING) {
+                $defaultRedirect = route('tickets.validate.form');
+            } else {
+                $defaultRedirect = route('dashboard');
+            }
+
+            return redirect()->intended($defaultRedirect);
         }
 
         return back()->withErrors([
