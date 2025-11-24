@@ -270,21 +270,25 @@ class SyncFromWooCommerce extends Command
     protected function createTickets($parsedData, $transaction, $schedule, $order)
     {
         $seatMap = $parsedData['seat_passenger_map'] ?? [];
-        $ticketCount = $parsedData['adult_count'] + $parsedData['toddler_count'];
+        $adultCount = $parsedData['adult_count'];
+        $toddlerCount = $parsedData['toddler_count'];
+        $ticketCount = $adultCount + $toddlerCount;
+        $ticketIndex = 0;
 
-        for ($i = 0; $i < $ticketCount; $i++) {
-            $passengerName = $seatMap[$i + 1] ?? $parsedData['passenger_name'];
-            $seatNumber = array_keys($seatMap)[$i] ?? null; // KODE ASLI - TIDAK KITA PAKAI KARENA LOGIKA BARU
+        // Create adult tickets first
+        for ($i = 0; $i < $adultCount; $i++) {
+            $ticketIndex++;
+            $passengerName = $seatMap[$ticketIndex] ?? $parsedData['passenger_name'];
 
-            $ticketCode = "WC-{$order['id']}-" . str_pad($i + 1, 3, '0', STR_PAD_LEFT);
+            $ticketCode = "WC-{$order['id']}-" . str_pad($ticketIndex, 3, '0', STR_PAD_LEFT);
 
             $qrData = json_encode([
                 'ticket_code' => $ticketCode,
                 'transaction_id' => $transaction->id,
                 'woocommerce_order_id' => $order['id'],
                 'schedule_id' => $schedule->id,
-                'passenger_type' => $parsedData['passenger_type'],
-                'seat_number' => null, // Dikosongkan, akan diisi oleh createSeatBookings
+                'passenger_type' => 'adult',
+                'seat_number' => null, // Will be filled by createSeatBookings
                 'destination' => $schedule->destination->departure_location . ' → ' . $schedule->destination->destination_location
             ]);
 
@@ -293,11 +297,43 @@ class SyncFromWooCommerce extends Command
                 'ticket_code' => $ticketCode,
                 'transaction_id' => $transaction->id,
                 'passenger_name' => $passengerName,
-                'passenger_type' => $parsedData['passenger_type'],
-                'price' => $parsedData['ticket_price'],
+                'passenger_type' => 'adult',
+                'price' => $schedule->destination->adult_price,
                 'qr_code' => $qrData,
                 'status' => 'active',
-                'seat_number' => null, // Dikosongkan, akan diisi oleh createSeatBookings
+                'seat_number' => null, // Will be filled by createSeatBookings for adults
+                'is_synced' => true,
+                'synced_at' => now()
+            ]);
+        }
+
+        // Create toddler tickets (no seat needed)
+        for ($i = 0; $i < $toddlerCount; $i++) {
+            $ticketIndex++;
+            $passengerName = $seatMap[$ticketIndex] ?? $parsedData['passenger_name'] . ' (Balita ' . ($i + 1) . ')';
+
+            $ticketCode = "WC-{$order['id']}-" . str_pad($ticketIndex, 3, '0', STR_PAD_LEFT);
+
+            $qrData = json_encode([
+                'ticket_code' => $ticketCode,
+                'transaction_id' => $transaction->id,
+                'woocommerce_order_id' => $order['id'],
+                'schedule_id' => $schedule->id,
+                'passenger_type' => 'toddler',
+                'seat_number' => null, // Toddlers don't get seats
+                'destination' => $schedule->destination->departure_location . ' → ' . $schedule->destination->destination_location
+            ]);
+
+            Ticket::create([
+                'woocommerce_line_item_id' => $parsedData['line_item_id'],
+                'ticket_code' => $ticketCode,
+                'transaction_id' => $transaction->id,
+                'passenger_name' => $passengerName,
+                'passenger_type' => 'toddler',
+                'price' => $schedule->destination->toddler_price ?? 0,
+                'qr_code' => $qrData,
+                'status' => 'active',
+                'seat_number' => null, // Toddlers don't get seats - stays NULL
                 'is_synced' => true,
                 'synced_at' => now()
             ]);
@@ -308,44 +344,52 @@ class SyncFromWooCommerce extends Command
     protected function createSeatBookings($parsedData, $transaction, $schedule)
     {
         $seatMap = $parsedData['seat_passenger_map'] ?? [];
-        $requiredSeats = count($seatMap);
+        $adultCount = $parsedData['adult_count'];
+        $toddlerCount = $parsedData['toddler_count'];
 
-        // Jika seatMap kosong (mungkin dari order lama), gunakan total count
-        if ($requiredSeats == 0) {
-            $requiredSeats = $parsedData['adult_count'] + $parsedData['toddler_count'];
-        }
+        // Only adults need seats - toddlers will be held on laps
+        $requiredSeats = $adultCount;
 
-        // Buat nama penumpang placeholder jika seatMap tidak ada
-        $passengers = [];
+        // Buat nama penumpang dewasa saja
+        $adultPassengers = [];
         if (empty($seatMap)) {
-            for ($i = 0; $i < $requiredSeats; $i++) {
-                $passengers[] = $parsedData['passenger_name'] . ($i > 0 ? ' (' . ($i + 1) . ')' : '');
+            for ($i = 0; $i < $adultCount; $i++) {
+                $adultPassengers[] = $parsedData['passenger_name'] . ($i > 0 ? ' (' . ($i + 1) . ')' : '');
             }
         } else {
-            $passengers = array_values($seatMap);
+            // Get first N adults from seat map
+            $adultPassengers = array_slice(array_values($seatMap), 0, $adultCount);
+        }
+
+        // Get toddler passengers for seat booking record (without actual seats)
+        $toddlerPassengers = [];
+        for ($i = 0; $i < $toddlerCount; $i++) {
+            $toddlerPassengers[] = $parsedData['passenger_name'] . ' (Balita ' . ($i + 1) . ')';
         }
 
         // Get already booked seats for this schedule and date
         $bookedSeats = SeatBooking::where('schedule_id', $schedule->id)
             ->where('departure_date', $parsedData['departure_date'])
+            ->whereNotNull('seat_number')  // Only count actual seats
             ->pluck('seat_number')
             ->toArray();
 
         // DYNAMIC: Get seat format from existing bookings or generate based on capacity
         $availableSeats = $this->generateAvailableSeats($schedule, $bookedSeats);
 
-        // VALIDATION: Check if we have enough available seats
+        // VALIDATION: Check if we have enough available seats (only for adults)
         if (count($availableSeats) < $requiredSeats) {
             $availableCount = count($availableSeats);
             throw new \Exception(
-                "Insufficient seats available. Required: {$requiredSeats}, Available: {$availableCount} " .
+                "Insufficient seats available. Required: {$requiredSeats} (adults only), Available: {$availableCount} " .
                 "for schedule #{$schedule->id} on {$parsedData['departure_date']}"
             );
         }
 
         $assignedSeatNumbers = [];
 
-        foreach ($passengers as $index => $passengerName) {
+        // Assign seats to adults only
+        foreach ($adultPassengers as $index => $passengerName) {
             // Auto-assign from available seats (prioritize front seats)
             $assignedSeat = $availableSeats[$index];
             $assignedSeatNumbers[] = $assignedSeat;
@@ -356,7 +400,7 @@ class SyncFromWooCommerce extends Command
                 'seat_number' => $assignedSeat,
                 'transaction_id' => $transaction->id,
                 'passenger_name' => $passengerName,
-                'passenger_type' => $parsedData['passenger_type'],
+                'passenger_type' => 'adult',
                 'status' => 'booked'
             ]);
 
@@ -364,16 +408,33 @@ class SyncFromWooCommerce extends Command
             $bookedSeats[] = $assignedSeat;
         }
 
-        // Update tickets with assigned seat numbers
-        $tickets = $transaction->tickets()->get();
-        foreach ($tickets as $i => $ticket) {
+        // Create seat booking records for toddlers (no actual seat - NULL seat_number)
+        foreach ($toddlerPassengers as $passengerName) {
+            SeatBooking::create([
+                'schedule_id' => $schedule->id,
+                'departure_date' => $parsedData['departure_date'],
+                'seat_number' => null,  // Toddlers don't get seats
+                'transaction_id' => $transaction->id,
+                'passenger_name' => $passengerName,
+                'passenger_type' => 'toddler',
+                'status' => 'booked'
+            ]);
+        }
+
+        // Update adult tickets with assigned seat numbers
+        $adultTickets = $transaction->tickets()->where('passenger_type', 'adult')->get();
+        foreach ($adultTickets as $i => $ticket) {
             if (isset($assignedSeatNumbers[$i])) {
                 $ticket->update(['seat_number' => $assignedSeatNumbers[$i]]);
-                // Anda juga bisa update QR code di sini jika perlu
             }
         }
 
-        $this->info("✅ Assigned seats: " . implode(', ', $assignedSeatNumbers));
+        // Toddler tickets remain with NULL seat_number (no update needed)
+
+        $this->info("✅ Assigned seats to {$adultCount} adults: " . implode(', ', $assignedSeatNumbers));
+        if ($toddlerCount > 0) {
+            $this->info("   {$toddlerCount} toddler(s) - no seats assigned (will be held)");
+        }
     }
 
     // Ini adalah FUNGSI BARU dari teman Anda (Dipertahankan)

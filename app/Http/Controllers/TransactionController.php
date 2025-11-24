@@ -127,18 +127,23 @@ class TransactionController extends Controller
             return back()->withErrors(['seats' => 'Number of seat assignments must match total passengers.']);
         }
 
-        // Extract seat numbers for availability check
-        $selectedSeatNumbers = array_column($seatAssignments, 'seatNumber');
-        
-        // Check if selected seats are available
-        $existingBookings = \App\Models\SeatBooking::where('schedule_id', $request->schedule_id)
-            ->where('departure_date', $request->departure_date)
-            ->whereIn('seat_number', $selectedSeatNumbers)
-            ->where('status', 'booked')
-            ->count();
+        // Extract seat numbers for availability check (exclude null for toddlers)
+        $selectedSeatNumbers = array_filter(
+            array_column($seatAssignments, 'seatNumber'),
+            fn($seat) => $seat !== null
+        );
 
-        if ($existingBookings > 0) {
-            return back()->withErrors(['seats' => 'Some selected seats are no longer available.']);
+        // Check if selected seats are available
+        if (!empty($selectedSeatNumbers)) {
+            $existingBookings = \App\Models\SeatBooking::where('schedule_id', $request->schedule_id)
+                ->where('departure_date', $request->departure_date)
+                ->whereIn('seat_number', $selectedSeatNumbers)
+                ->where('status', 'booked')
+                ->count();
+
+            if ($existingBookings > 0) {
+                return back()->withErrors(['seats' => 'Some selected seats are no longer available.']);
+            }
         }
 
         DB::beginTransaction();
@@ -181,24 +186,27 @@ class TransactionController extends Controller
                 $checksum = str_replace(['0', 'O', 'I', '1'], ['A', 'B', 'C', 'D'], $checksum);
 
                 $ticketCode = "SB-{$datePart}-{$ticketNumber}-{$checksum}";
-                
+
                 // Determine price based on passenger type
-                $price = $assignment['passengerType'] === 'adult' 
-                    ? $schedule->destination->adult_price 
+                $price = $assignment['passengerType'] === 'adult'
+                    ? $schedule->destination->adult_price
                     : ($schedule->destination->toddler_price ?? 0);
-                
+
+                // Get seat number (null for toddlers)
+                $seatNumber = $assignment['seatNumber'];
+
                 // Generate QR Code data with seat information
                 $qrData = json_encode([
                     'ticket_code' => $ticketCode,
                     'transaction_id' => $transaction->id,
                     'schedule_id' => $schedule->id,
                     'passenger_type' => $assignment['passengerType'],
-                    'seat_number' => $assignment['seatNumber'],
+                    'seat_number' => $seatNumber,
                     'departure_time' => $schedule->departure_time->format('H:i'),
                     'destination_code' => $schedule->destination->code,
                     'destination' => $schedule->destination->departure_location . ' → ' . $schedule->destination->destination_location
                 ]);
-                
+
                 // Create ticket
                 Ticket::create([
                     'ticket_code' => $ticketCode,
@@ -208,19 +216,33 @@ class TransactionController extends Controller
                     'price' => $price,
                     'qr_code' => $qrData,
                     'status' => 'active',
-                    'seat_number' => $assignment['seatNumber']
+                    'seat_number' => $seatNumber  // NULL for toddlers
                 ]);
-                
-                // Create seat booking
-                \App\Models\SeatBooking::create([
-                    'schedule_id' => $request->schedule_id,
-                    'departure_date' => $request->departure_date,
-                    'seat_number' => $assignment['seatNumber'],
-                    'transaction_id' => $transaction->id,
-                    'passenger_name' => $assignment['passengerName'],
-                    'passenger_type' => $assignment['passengerType'],
-                    'status' => 'booked'
-                ]);
+
+                // Create seat booking only if seat number is not null (skip toddlers)
+                if ($seatNumber !== null) {
+                    \App\Models\SeatBooking::create([
+                        'schedule_id' => $request->schedule_id,
+                        'departure_date' => $request->departure_date,
+                        'seat_number' => $seatNumber,
+                        'transaction_id' => $transaction->id,
+                        'passenger_name' => $assignment['passengerName'],
+                        'passenger_type' => $assignment['passengerType'],
+                        'status' => 'booked'
+                    ]);
+                } else {
+                    // For toddlers, still create a seat booking record but with NULL seat_number
+                    // This helps track total passengers even though they don't occupy a seat
+                    \App\Models\SeatBooking::create([
+                        'schedule_id' => $request->schedule_id,
+                        'departure_date' => $request->departure_date,
+                        'seat_number' => null,  // No seat for toddlers
+                        'transaction_id' => $transaction->id,
+                        'passenger_name' => $assignment['passengerName'],
+                        'passenger_type' => $assignment['passengerType'],
+                        'status' => 'booked'
+                    ]);
+                }
             }
 
             DB::commit();
