@@ -796,9 +796,11 @@ function toggleSeat(seatNumber) {
 
 function updateSeatAssignmentData() {
     const selectedSeatsInput = document.getElementById('selected_seats');
-    
+
     // Create an array of seat assignments with passenger info
     const seatAssignments = [];
+
+    // Add seat assignments for adults
     Object.keys(passengerSeatAssignments).forEach(passengerIndex => {
         const passenger = passengers[passengerIndex];
         const seatNumber = passengerSeatAssignments[passengerIndex];
@@ -809,33 +811,60 @@ function updateSeatAssignmentData() {
             seatNumber: seatNumber
         });
     });
-    
+
+    // Add toddlers without seat assignments (seat_number will be null)
+    passengers.forEach((passenger, index) => {
+        if (passenger.type === 'toddler') {
+            seatAssignments.push({
+                passengerIndex: index,
+                passengerName: passenger.name,
+                passengerType: passenger.type,
+                seatNumber: null  // Balita tidak punya kursi
+            });
+        }
+    });
+
     selectedSeatsInput.value = JSON.stringify(seatAssignments);
-    
+
     // Update status display
     const statusDiv = document.getElementById('seatAssignmentStatus');
     const assignedCount = Object.keys(passengerSeatAssignments).length;
+    const adultsNeedingSeats = passengers.filter(p => p.type === 'adult').length;
+    const toddlerCount = passengers.filter(p => p.type === 'toddler').length;
+
     if (assignedCount === 0) {
         statusDiv.textContent = 'Belum ada kursi yang dipilih';
-    } else if (assignedCount < totalPassengers) {
-        statusDiv.textContent = `${assignedCount}/${totalPassengers} penumpang sudah memilih kursi`;
+    } else if (assignedCount < adultsNeedingSeats) {
+        statusDiv.textContent = `${assignedCount}/${adultsNeedingSeats} penumpang dewasa sudah memilih kursi`;
     } else {
-        statusDiv.textContent = `Semua penumpang sudah memiliki kursi! ✅`;
+        if (toddlerCount > 0) {
+            statusDiv.textContent = `Semua penumpang dewasa sudah memiliki kursi! (${toddlerCount} balita tidak perlu kursi) ✅`;
+        } else {
+            statusDiv.textContent = `Semua penumpang sudah memiliki kursi! ✅`;
+        }
     }
 }
 
 function updatePassengerCount() {
     const adultCount = parseInt(document.getElementById('adult_count').value) || 0;
     const toddlerCount = parseInt(document.getElementById('toddler_count').value) || 0;
+
+    // Validasi: Jika ada balita, harus ada minimal 1 dewasa
+    if (toddlerCount > 0 && adultCount < 1) {
+        alert('Balita harus ditemani minimal 1 orang dewasa!');
+        document.getElementById('toddler_count').value = 0;
+        return;
+    }
+
     totalPassengers = adultCount + toddlerCount;
-    
+
     // Reset seat selection if passenger count changes
     selectedSeats = [];
     document.querySelectorAll('.seat-btn').forEach(btn => {
         btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
         btn.classList.add('bg-green-500', 'hover:bg-green-600');
     });
-    
+
     updateSelectedSeatsInfo();
     generatePassengerFields();
 }
@@ -999,42 +1028,65 @@ function loadSeatMapWithPassengers() {
 
 function generatePassengerSeatList() {
     const container = document.getElementById('passengerSeatAssignment');
-    let html = '<h5 class="text-md font-semibold text-gray-700 dark:text-gray-300 mb-3">Klik nama penumpang, lalu pilih kursi:</h5>';
+    let html = '<h5 class="text-md font-semibold text-gray-700 dark:text-gray-300 mb-3">Klik nama penumpang dewasa, lalu pilih kursi:</h5>';
     html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">';
-    
+
     passengers.forEach((passenger, index) => {
+        const isToddler = passenger.type === 'toddler';
         const assignedSeat = passengerSeatAssignments[index] || '';
         const isSelected = currentSelectingPassenger === index;
         const hasAssignment = assignedSeat !== '';
-        
-        html += `
-            <button type="button" 
-                    class="passenger-btn p-3 border-2 rounded-lg text-left transition-all ${
-                        isSelected ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' : 
-                        hasAssignment ? 'border-green-500 bg-green-50 dark:bg-green-900/20' :
-                        'border-gray-300 hover:border-blue-400'
-                    }"
-                    onclick="selectPassengerForSeat(${index})">
-                <div class="font-medium text-gray-700 dark:text-gray-300">
-                    ${passenger.name || `${passenger.type === 'adult' ? 'Dewasa' : 'Balita'} ${passenger.index}`}
+
+        // Balita tidak perlu kursi, tampilkan dengan style berbeda
+        if (isToddler) {
+            html += `
+                <div class="p-3 border-2 border-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg opacity-75">
+                    <div class="font-medium text-gray-600 dark:text-gray-400">
+                        ${passenger.name || `Balita ${passenger.index}`}
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-500">
+                        Tidak perlu kursi (dipangku)
+                    </div>
                 </div>
-                <div class="text-sm ${hasAssignment ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}">
-                    ${hasAssignment ? `Kursi: ${assignedSeat}` : 'Belum pilih kursi'}
-                </div>
-            </button>
-        `;
+            `;
+        } else {
+            // Penumpang dewasa - bisa pilih kursi
+            html += `
+                <button type="button"
+                        class="passenger-btn p-3 border-2 rounded-lg text-left transition-all ${
+                            isSelected ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20' :
+                            hasAssignment ? 'border-green-500 bg-green-50 dark:bg-green-900/20' :
+                            'border-gray-300 hover:border-blue-400'
+                        }"
+                        onclick="selectPassengerForSeat(${index})">
+                    <div class="font-medium text-gray-700 dark:text-gray-300">
+                        ${passenger.name || `Dewasa ${passenger.index}`}
+                    </div>
+                    <div class="text-sm ${hasAssignment ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}">
+                        ${hasAssignment ? `Kursi: ${assignedSeat}` : 'Belum pilih kursi'}
+                    </div>
+                </button>
+            `;
+        }
     });
-    
+
     html += '</div>';
     container.innerHTML = html;
 }
 
 function selectPassengerForSeat(passengerIndex) {
+    const passenger = passengers[passengerIndex];
+
+    // Block balita dari pilih kursi
+    if (passenger.type === 'toddler') {
+        alert('Balita tidak perlu memilih kursi karena akan dipangku oleh orang dewasa.');
+        return;
+    }
+
     currentSelectingPassenger = passengerIndex;
     generatePassengerSeatList(); // Refresh to show selection
-    
+
     // Update status message
-    const passenger = passengers[passengerIndex];
     const statusDiv = document.getElementById('seatAssignmentStatus');
     statusDiv.textContent = `Sedang memilih kursi untuk: ${passenger.name}`;
 }
@@ -1054,33 +1106,37 @@ function validateForm() {
     const toddlerCount = parseInt(document.getElementById('toddler_count').value) || 0;
     const paymentMethod = document.querySelector('input[name="payment_method"]:checked')?.value;
     const submitBtn = document.getElementById('submitBtn');
-    
+
     // Check if all passenger name fields are filled
     let allNamesFilled = true;
     const adultNameInputs = document.querySelectorAll('input[name="adult_names[]"]');
     const toddlerNameInputs = document.querySelectorAll('input[name="toddler_names[]"]');
-    
+
     adultNameInputs.forEach(input => {
         if (!input.value.trim()) allNamesFilled = false;
     });
-    
+
     toddlerNameInputs.forEach(input => {
         if (!input.value.trim()) allNamesFilled = false;
     });
-    
-    // Check if all passengers have seat assignments
-    const allPassengersHaveSeats = Object.keys(passengerSeatAssignments).length === totalPassengers;
-    
+
+    // Hitung jumlah penumpang dewasa yang perlu kursi (balita tidak perlu kursi)
+    const adultsNeedingSeats = passengers.filter(p => p.type === 'adult').length;
+    const assignedSeatsCount = Object.keys(passengerSeatAssignments).length;
+
+    // Check if all adult passengers have seat assignments (balita tidak perlu kursi)
+    const allAdultsHaveSeats = assignedSeatsCount >= adultsNeedingSeats;
+
     // Check if all required fields are filled
-    const isValid = speedboatId !== '' && 
-                   destinationId !== '' && 
+    const isValid = speedboatId !== '' &&
+                   destinationId !== '' &&
                    departureDate !== '' &&
-                   scheduleId !== '' && 
-                   adultCount >= 1 && 
-                   allPassengersHaveSeats &&
-                   allNamesFilled && 
+                   scheduleId !== '' &&
+                   adultCount >= 1 &&
+                   allAdultsHaveSeats &&
+                   allNamesFilled &&
                    paymentMethod !== undefined;
-    
+
     if (isValid) {
         // Enable button and make it blue
         submitBtn.disabled = false;
