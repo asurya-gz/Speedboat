@@ -192,12 +192,44 @@ class WooCommerceService
                 $destinationLocation = trim(explode(',', $destinationLocation)[0]);
             }
 
-            // Get ticket info
+            // Get ticket info (UPDATED: Extract seat numbers from ALL tickets)
             $ticketInfo = $this->getMetaValue($metaData, '_wbtm_ticket_info');
             if (is_string($ticketInfo)) {
                 $ticketInfo = json_decode($ticketInfo, true);
             }
-            $ticketInfo = is_array($ticketInfo) ? $ticketInfo[0] : [];
+
+            // Process all tickets to extract seat numbers and passenger counts
+            $seatNumbers = [];
+            $adultCount = 0;
+            $childCount = 0;
+            $toddlerCount = 0;
+
+            if (is_array($ticketInfo)) {
+                foreach ($ticketInfo as $index => $ticket) {
+                    // Extract seat_name from each ticket
+                    if (isset($ticket['seat_name']) && !empty($ticket['seat_name'])) {
+                        $seatNumbers[$index + 1] = $ticket['seat_name'];
+                    }
+
+                    // Count passengers by type
+                    $ticketType = $ticket['ticket_type'] ?? '0';
+                    $qty = intval($ticket['ticket_qty'] ?? 1);
+
+                    if ($ticketType === '0') {
+                        $adultCount += $qty;
+                    } elseif ($ticketType === '1') {
+                        $childCount += $qty;
+                    } elseif ($ticketType === '2') {
+                        $toddlerCount += $qty;
+                    }
+                }
+            }
+
+            // Fallback to first ticket for legacy compatibility
+            $firstTicket = is_array($ticketInfo) && isset($ticketInfo[0]) ? $ticketInfo[0] : [];
+            if ($adultCount === 0 && $childCount === 0 && $toddlerCount === 0) {
+                $adultCount = intval($firstTicket['ticket_qty'] ?? 1);
+            }
 
             // Get seat passenger map
             $seatPassengerMap = $this->getMetaValue($metaData, 'seat_passenger_map');
@@ -214,19 +246,9 @@ class WooCommerceService
             // Get bus/speedboat ID
             $busId = $this->getMetaValue($metaData, '_wbtm_bus_id');
 
-            // Map WooCommerce ticket_type to our passenger_type
-            // WooCommerce: "0" = Dewasa (Adult), "1" = Anak (Child), "2" = Balita (Toddler)
-            $ticketType = $ticketInfo['ticket_type'] ?? '0';
-            $passengerType = 'adult'; // default
-            if ($ticketType === '1') {
-                $passengerType = 'child';
-            } elseif ($ticketType === '2') {
-                $passengerType = 'toddler';
-            }
-
             return [
                 'woocommerce_order_id' => $order['id'],
-                'speedboat_name' => $lineItem['name'], // Sekarang kita tahu 'name' pasti ada
+                'speedboat_name' => $lineItem['name'],
                 'woocommerce_bus_id' => $busId,
                 'departure_location' => $departureLocation,
                 'destination_location' => $destinationLocation,
@@ -235,18 +257,18 @@ class WooCommerceService
                 'passenger_name' => $passengerName,
                 'passenger_phone' => $order['billing']['phone'] ?? '',
                 'passenger_email' => $order['billing']['email'] ?? '',
-                'adult_count' => $ticketInfo['ticket_qty'] ?? 1,
-                'child_count' => 0,
-                'toddler_count' => 0,
-                'total_amount' => $lineItem['total'], // Use line item total, not order total (which includes fees)
+                'adult_count' => $adultCount,
+                'child_count' => $childCount,
+                'toddler_count' => $toddlerCount,
+                'total_amount' => $lineItem['total'],
                 'payment_method' => $order['payment_method'],
                 'payment_status' => $order['status'] === 'completed' ? 'paid' : 'pending',
                 'paid_at' => $order['date_paid'] ? \Carbon\Carbon::parse($order['date_paid']) : null,
                 'created_at' => \Carbon\Carbon::parse($order['date_created']),
                 'seat_passenger_map' => $seatPassengerMap,
+                'seat_numbers' => $seatNumbers,
                 'line_item_id' => $lineItem['id'],
-                'ticket_price' => $ticketInfo['ticket_price'] ?? $lineItem['total'],
-                'passenger_type' => $passengerType
+                'ticket_price' => $firstTicket['ticket_price'] ?? $lineItem['total']
             ];
 
         } catch (\Exception $e) {

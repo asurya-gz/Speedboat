@@ -270,6 +270,7 @@ class SyncFromWooCommerce extends Command
     protected function createTickets($parsedData, $transaction, $schedule, $order)
     {
         $seatMap = $parsedData['seat_passenger_map'] ?? [];
+        $seatNumbers = $parsedData['seat_numbers'] ?? [];  // NEW: Get seat numbers from WooCommerce
         $adultCount = $parsedData['adult_count'];
         $toddlerCount = $parsedData['toddler_count'];
         $ticketCount = $adultCount + $toddlerCount;
@@ -279,6 +280,7 @@ class SyncFromWooCommerce extends Command
         for ($i = 0; $i < $adultCount; $i++) {
             $ticketIndex++;
             $passengerName = $seatMap[$ticketIndex] ?? $parsedData['passenger_name'];
+            $seatNumber = $seatNumbers[$ticketIndex] ?? null;  // NEW: Get seat from WooCommerce
 
             $ticketCode = "WC-{$order['id']}-" . str_pad($ticketIndex, 3, '0', STR_PAD_LEFT);
 
@@ -288,7 +290,7 @@ class SyncFromWooCommerce extends Command
                 'woocommerce_order_id' => $order['id'],
                 'schedule_id' => $schedule->id,
                 'passenger_type' => 'adult',
-                'seat_number' => null, // Will be filled by createSeatBookings
+                'seat_number' => $seatNumber,  // UPDATED: Use seat from WooCommerce
                 'destination' => $schedule->destination->departure_location . ' → ' . $schedule->destination->destination_location
             ]);
 
@@ -301,7 +303,7 @@ class SyncFromWooCommerce extends Command
                 'price' => $schedule->destination->adult_price,
                 'qr_code' => $qrData,
                 'status' => 'active',
-                'seat_number' => null, // Will be filled by createSeatBookings for adults
+                'seat_number' => $seatNumber,  // UPDATED: Directly use seat from WooCommerce
                 'is_synced' => true,
                 'synced_at' => now()
             ]);
@@ -340,10 +342,11 @@ class SyncFromWooCommerce extends Command
         }
     }
 
-    // Ini adalah FUNGSI BARU dari teman Anda (Dipertahankan)
+    // UPDATED: Use seat numbers from WooCommerce (100% exact match)
     protected function createSeatBookings($parsedData, $transaction, $schedule)
     {
         $seatMap = $parsedData['seat_passenger_map'] ?? [];
+        $seatNumbers = $parsedData['seat_numbers'] ?? [];  // NEW: Seat numbers from WooCommerce
         $adultCount = $parsedData['adult_count'];
         $toddlerCount = $parsedData['toddler_count'];
 
@@ -374,38 +377,91 @@ class SyncFromWooCommerce extends Command
             ->pluck('seat_number')
             ->toArray();
 
-        // DYNAMIC: Get seat format from existing bookings or generate based on capacity
-        $availableSeats = $this->generateAvailableSeats($schedule, $bookedSeats);
-
-        // VALIDATION: Check if we have enough available seats (only for adults)
-        if (count($availableSeats) < $requiredSeats) {
-            $availableCount = count($availableSeats);
-            throw new \Exception(
-                "Insufficient seats available. Required: {$requiredSeats} (adults only), Available: {$availableCount} " .
-                "for schedule #{$schedule->id} on {$parsedData['departure_date']}"
-            );
-        }
-
         $assignedSeatNumbers = [];
+        $useWooCommerceSeats = !empty($seatNumbers);
 
-        // Assign seats to adults only
-        foreach ($adultPassengers as $index => $passengerName) {
-            // Auto-assign from available seats (prioritize front seats)
-            $assignedSeat = $availableSeats[$index];
-            $assignedSeatNumbers[] = $assignedSeat;
+        if ($useWooCommerceSeats) {
+            // NEW LOGIC: Use exact seat numbers from WooCommerce
+            $this->info("🎯 Using seat numbers from WooCommerce: " . implode(', ', $seatNumbers));
 
-            SeatBooking::create([
-                'schedule_id' => $schedule->id,
-                'departure_date' => $parsedData['departure_date'],
-                'seat_number' => $assignedSeat,
-                'transaction_id' => $transaction->id,
-                'passenger_name' => $passengerName,
-                'passenger_type' => 'adult',
-                'status' => 'booked'
-            ]);
+            // Validate all seats from WooCommerce are available
+            foreach ($seatNumbers as $index => $seatNumber) {
+                if ($index > $adultCount) break; // Only process adult seats
 
-            // Add to booked seats to avoid duplicate in same batch
-            $bookedSeats[] = $assignedSeat;
+                if (in_array($seatNumber, $bookedSeats)) {
+                    // CONFLICT: Seat already booked offline!
+                    throw new \Exception(
+                        "Seat conflict! Seat {$seatNumber} from WooCommerce order is already booked locally. " .
+                        "Schedule: #{$schedule->id}, Date: {$parsedData['departure_date']}. " .
+                        "Please resolve this conflict manually."
+                    );
+                }
+            }
+
+            // All seats available, proceed with WooCommerce seat numbers
+            foreach ($adultPassengers as $index => $passengerName) {
+                $assignedSeat = $seatNumbers[$index + 1] ?? null;
+
+                if (!$assignedSeat) {
+                    // Fallback if WooCommerce didn't provide enough seats
+                    $this->warn("⚠️  Seat not provided by WooCommerce for passenger #{$index}, auto-assigning...");
+                    $availableSeats = $this->generateAvailableSeats($schedule, $bookedSeats);
+                    $assignedSeat = $availableSeats[0] ?? null;
+
+                    if (!$assignedSeat) {
+                        throw new \Exception("No available seats for auto-assignment");
+                    }
+                }
+
+                $assignedSeatNumbers[] = $assignedSeat;
+
+                SeatBooking::create([
+                    'schedule_id' => $schedule->id,
+                    'departure_date' => $parsedData['departure_date'],
+                    'seat_number' => $assignedSeat,
+                    'transaction_id' => $transaction->id,
+                    'passenger_name' => $passengerName,
+                    'passenger_type' => 'adult',
+                    'status' => 'booked'
+                ]);
+
+                // Add to booked seats to avoid duplicate in same batch
+                $bookedSeats[] = $assignedSeat;
+            }
+
+        } else {
+            // FALLBACK: Auto-assign seats (old behavior for backward compatibility)
+            $this->warn("⚠️  No seat numbers from WooCommerce, using auto-assignment (old behavior)");
+
+            $availableSeats = $this->generateAvailableSeats($schedule, $bookedSeats);
+
+            // VALIDATION: Check if we have enough available seats
+            if (count($availableSeats) < $requiredSeats) {
+                $availableCount = count($availableSeats);
+                throw new \Exception(
+                    "Insufficient seats available. Required: {$requiredSeats} (adults only), Available: {$availableCount} " .
+                    "for schedule #{$schedule->id} on {$parsedData['departure_date']}"
+                );
+            }
+
+            // Assign seats to adults only (auto-assign from front)
+            foreach ($adultPassengers as $index => $passengerName) {
+                $assignedSeat = $availableSeats[$index];
+                $assignedSeatNumbers[] = $assignedSeat;
+
+                SeatBooking::create([
+                    'schedule_id' => $schedule->id,
+                    'departure_date' => $parsedData['departure_date'],
+                    'seat_number' => $assignedSeat,
+                    'transaction_id' => $transaction->id,
+                    'passenger_name' => $passengerName,
+                    'passenger_type' => 'adult',
+                    'status' => 'booked'
+                ]);
+
+                // Add to booked seats to avoid duplicate in same batch
+                $bookedSeats[] = $assignedSeat;
+            }
         }
 
         // Create seat booking records for toddlers (no actual seat - NULL seat_number)
